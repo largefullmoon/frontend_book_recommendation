@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Book, Users, BookOpen } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -7,7 +7,16 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+  const navigate = useNavigate()
+  if (localStorage.getItem("adminAuth") != "true") {
+    navigate('/admin/login')
+  }
   const location = useLocation();
+
+  const handleLogout = () => {
+    localStorage.removeItem('adminAuth');
+    navigate('/admin/login');
+  };
 
   const navItems = [
     {
@@ -39,21 +48,26 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center px-4 py-3 text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors ${
-                location.pathname === item.path
-                  ? 'bg-indigo-50 text-indigo-700 border-r-4 border-indigo-700'
-                  : ''
-              }`}
+              className={`flex items-center px-4 py-3 text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors ${location.pathname === item.path
+                ? 'bg-indigo-50 text-indigo-700 border-r-4 border-indigo-700'
+                : ''
+                }`}
             >
               <item.icon className="w-5 h-5 mr-3" />
               {item.label}
             </Link>
           ))}
         </nav>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors mt-4"
+        >
+          Logout
+        </button>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 bg-gray-50 p-8">
+      <div className="flex-1 p-8 bg-gray-50">
         {children}
       </div>
     </div>

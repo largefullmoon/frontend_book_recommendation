@@ -15,7 +15,7 @@ const AdminLogin: React.FC = () => {
     try {
       // Here you would implement actual authentication
       // For now, we'll use a mock check
-      if (username === 'admin' && password === 'admin123') {
+      if (username === 'admin' && password === 'admin') {
         // In a real app, you would store the auth token
         localStorage.setItem('adminAuth', 'true');
         navigate('/admin/books');
@@ -29,18 +29,18 @@ const AdminLogin: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto">
-      <div className="bg-white rounded-lg shadow-lg p-8">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="p-8 bg-white rounded-lg shadow-lg">
+        <div className="mb-8 text-center">
+          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-indigo-100 rounded-full">
             <Lock className="w-8 h-8 text-indigo-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-800">Admin Login</h2>
-          <p className="text-gray-600 mt-2">Sign in to access the admin panel</p>
+          <p className="mt-2 text-gray-600">Sign in to access the admin panel</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="username" className="block mb-1 text-sm font-medium text-gray-700">
               Username
             </label>
             <input
@@ -54,7 +54,7 @@ const AdminLogin: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className="block mb-1 text-sm font-medium text-gray-700">
               Password
             </label>
             <input
@@ -68,12 +68,12 @@ const AdminLogin: React.FC = () => {
           </div>
 
           {error && (
-            <div className="text-red-500 text-sm text-center">{error}</div>
+            <div className="text-sm text-center text-red-500">{error}</div>
           )}
 
           <button
             type="submit"
-            className="w-full brand-blue-bg text-white py-2 px-4 rounded-md hover:opacity-90 transition-opacity"
+            className="w-full px-4 py-2 text-white transition-opacity rounded-md brand-blue-bg hover:opacity-90"
           >
             Sign In
           </button>

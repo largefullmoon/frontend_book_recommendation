@@ -13,13 +13,13 @@ function App() {
     <Router>
       <div className="min-h-screen bg-gradient-to-b from-[#54d9ff]/10 to-[#aadb4d]/10 flex flex-col justify-between">
         <header className="p-4 bg-white shadow-sm">
-          <div className="container mx-auto flex items-center">
-            <img src={Logo} alt="JustBookify Logo" className="h-8 w-8 brand-blue-text mr-2" />
+          <div className="container flex items-center mx-auto">
+            <img src={Logo} alt="JustBookify Logo" className="w-8 h-8 mr-2 brand-blue-text" />
             <h1 className="text-xl font-bold brand-blue-text">JustBookify</h1>
           </div>
         </header>
 
-        <main className="container mx-auto p-4 flex-grow">
+        <main className="container flex-grow p-4 mx-auto">
           <Routes>
             <Route
               path="/"
@@ -46,7 +46,7 @@ function App() {
           </Routes>
         </main>
 
-        <footer className="p-4 brand-green-bg text-white text-center mt-8">
+        <footer className="p-4 mt-8 text-center text-white brand-green-bg">
           <div className="container mx-auto">
             <p className="text-sm">© {new Date().getFullYear()} JustBookify. All rights reserved.</p>
           </div>

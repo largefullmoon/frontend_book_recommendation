@@ -1,58 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpenCheck } from 'lucide-react';
+import axios from 'axios';
 import { useQuiz } from '../../context/QuizContext';
 import Button from '../common/Button';
 import Card from '../common/Card';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+interface Book {
+  id: string;
+  title: string;
+  author: string;
+  description: string;
+  genres: string[];
+  ageRange: {
+    min: number;
+    max: number;
+  };
+  coverImage?: string;
+}
 
 const BookSeries: React.FC = () => {
   const { nextStage, prevStage, name, age, bookSeries, updateBookSeriesResponse } = useQuiz();
   const [currentPage, setCurrentPage] = useState(0);
   const [activeSeries, setActiveSeries] = useState<string | null>(null);
-  
-  // Mock book series data - this would come from an API or external source
-  const getBookSeriesByAge = () => {
-    // Age-appropriate book series (simplified for the example)
-    if (age && age <= 7) {
-      return [
-        { id: 'peppa', title: 'Peppa Pig' },
-        { id: 'hungry-caterpillar', title: 'The Very Hungry Caterpillar' },
-        { id: 'gruffalo', title: 'The Gruffalo' },
-        { id: 'spot', title: 'Spot the Dog' },
-        { id: 'thomas', title: 'Thomas the Tank Engine' },
-        { id: 'paddington', title: 'Paddington Bear' },
-        { id: 'peter-rabbit', title: 'Peter Rabbit' },
-        { id: 'mog', title: 'Mog the Cat' },
-      ];
-    } else if (age && age <= 10) {
-      return [
-        { id: 'harry-potter', title: 'Harry Potter' },
-        { id: 'diary-wimpy-kid', title: 'Diary of a Wimpy Kid' },
-        { id: 'captain-underpants', title: 'Captain Underpants' },
-        { id: 'dog-man', title: 'Dog Man' },
-        { id: 'beast-quest', title: 'Beast Quest' },
-        { id: 'roald-dahl', title: 'Roald Dahl books' },
-        { id: 'rainbow-magic', title: 'Rainbow Magic' },
-        { id: 'horrid-henry', title: 'Horrid Henry' },
-      ];
-    } else {
-      return [
-        { id: 'harry-potter', title: 'Harry Potter' },
-        { id: 'percy-jackson', title: 'Percy Jackson' },
-        { id: 'hunger-games', title: 'The Hunger Games' },
-        { id: 'maze-runner', title: 'The Maze Runner' },
-        { id: 'divergent', title: 'Divergent' },
-        { id: 'shadowhunters', title: 'Shadowhunters' },
-        { id: 'wings-of-fire', title: 'Wings of Fire' },
-        { id: 'lord-of-rings', title: 'The Lord of the Rings' },
-      ];
-    }
+  const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Get age group based on user's age
+  const getAgeGroup = () => {
+    if (age && age <= 7) return '4-7';
+    if (age && age <= 10) return '8-10';
+    return '11+';
   };
-  
-  const allSeries = getBookSeriesByAge();
+
+  // Fetch recommended books from backend
+  useEffect(() => {
+    const fetchRecommendedBooks = async () => {
+      try {
+        setIsLoading(true);
+        const ageGroup = getAgeGroup();
+        const response = await axios.get<{ [key: string]: Book[] }>(`${API_BASE_URL}/recommendations`);
+        setRecommendedBooks(response.data[ageGroup] || []);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load recommended books. Please try again.');
+        console.error('Error fetching recommended books:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRecommendedBooks();
+  }, [age]);
+
   const seriesPerPage = 4;
-  const totalPages = Math.ceil(allSeries.length / seriesPerPage);
+  const totalPages = Math.ceil(recommendedBooks.length / seriesPerPage);
   
-  const currentSeries = allSeries.slice(
+  const currentSeries = recommendedBooks.slice(
     currentPage * seriesPerPage, 
     (currentPage + 1) * seriesPerPage
   );
@@ -134,6 +140,23 @@ const BookSeries: React.FC = () => {
     }
   };
   
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center p-4">
+        <p className="text-red-600 mb-4">{error}</p>
+        <Button onClick={() => window.location.reload()}>Try Again</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fadeIn">
       <div className="text-center mb-6">
@@ -152,25 +175,26 @@ const BookSeries: React.FC = () => {
       </div>
       
       <div className="space-y-4 mb-8">
-        {currentSeries.map((series) => (
-          <div key={series.id}>
+        {currentSeries.map((book) => (
+          <div key={book.id}>
             <Card
-              selected={hasReadSeries(series.id)}
+              selected={hasReadSeries(book.id)}
               selectable
-              onClick={() => handleSeriesClick(series.id)}
+              onClick={() => handleSeriesClick(book.id)}
               className="p-4"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium">{series.title}</h3>
-                  {hasReadSeries(series.id) && getSeriesResponse(series.id) && (
+                  <h3 className="font-medium">{book.title}</h3>
+                  <p className="text-sm text-gray-600">{book.author}</p>
+                  {hasReadSeries(book.id) && getSeriesResponse(book.id) && (
                     <p className="text-sm text-gray-600 mt-1">
-                      Your opinion: {getResponseEmoji(getSeriesResponse(series.id))}
+                      Your opinion: {getResponseEmoji(getSeriesResponse(book.id))}
                     </p>
                   )}
                 </div>
                 
-                {hasReadSeries(series.id) ? (
+                {hasReadSeries(book.id) ? (
                   <div className="h-6 w-6 rounded-full bg-indigo-100 flex items-center justify-center">
                     <div className="h-4 w-4 rounded-full bg-indigo-600"></div>
                   </div>
@@ -180,7 +204,7 @@ const BookSeries: React.FC = () => {
               </div>
             </Card>
             
-            {activeSeries === series.id && <ResponseOptions seriesId={series.id} />}
+            {activeSeries === book.id && <ResponseOptions seriesId={book.id} />}
           </div>
         ))}
       </div>

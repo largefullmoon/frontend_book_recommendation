@@ -5,10 +5,9 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 const AGE_GROUPS = [
-  { id: '5-7', label: 'Ages 5-7' },
+  { id: '4-7', label: 'Ages 4-7' },
   { id: '8-10', label: 'Ages 8-10' },
-  { id: '11-13', label: 'Ages 11-13' },
-  { id: '14+', label: 'Ages 14+' }
+  { id: '11+', label: 'Ages 11+' },
 ];
 
 interface Book {
@@ -31,10 +30,9 @@ interface Recommendations {
 const RecommendationManager: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendations>({
-    '5-7': [],
+    '4-7': [],
     '8-10': [],
-    '11-13': [],
-    '14+': []
+    '11+': [],
   });
   const [selectedAgeGroup, setSelectedAgeGroup] = useState(AGE_GROUPS[0].id);
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,6 +44,7 @@ const RecommendationManager: React.FC = () => {
       setIsLoading(true);
       const response = await axios.get<Book[]>(`${API_BASE_URL}/books`);
       setBooks(response.data);
+      console.log(response.data);
       setError(null);
     } catch (err) {
       setError('Failed to fetch books. Please try again later.');
@@ -60,6 +59,7 @@ const RecommendationManager: React.FC = () => {
       setIsLoading(true);
       const response = await axios.get<Recommendations>(`${API_BASE_URL}/recommendations`);
       setRecommendations(response.data);
+      console.log(response.data);
       setError(null);
     } catch (err) {
       setError('Failed to fetch recommendations. Please try again later.');
@@ -76,7 +76,7 @@ const RecommendationManager: React.FC = () => {
 
   const filteredBooks = books.filter(book =>
     (book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    book.author.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      book.author.toLowerCase().includes(searchTerm.toLowerCase())) && recommendations[selectedAgeGroup] &&
     !recommendations[selectedAgeGroup].find(rec => rec.id === book.id)
   );
 
@@ -139,11 +139,10 @@ const RecommendationManager: React.FC = () => {
                 <button
                   key={group.id}
                   onClick={() => setSelectedAgeGroup(group.id)}
-                  className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                    selectedAgeGroup === group.id
-                      ? 'brand-blue-bg text-white'
-                      : 'hover:bg-gray-100'
-                  }`}
+                  className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${selectedAgeGroup === group.id
+                    ? 'brand-blue-bg text-white'
+                    : 'hover:bg-gray-100'
+                    }`}
                   disabled={isLoading}
                 >
                   {group.label}
@@ -159,7 +158,7 @@ const RecommendationManager: React.FC = () => {
             <h2 className="text-lg font-semibold text-gray-800 mb-4">
               Current Recommendations for {AGE_GROUPS.find(g => g.id === selectedAgeGroup)?.label}
             </h2>
-            
+
             <div className="mb-4 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -182,7 +181,7 @@ const RecommendationManager: React.FC = () => {
                 <div className="mb-6">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Current Recommendations</h3>
                   <div className="space-y-2">
-                    {recommendations[selectedAgeGroup].map(book => (
+                    {recommendations[selectedAgeGroup] && recommendations[selectedAgeGroup].map(book => (
                       <div
                         key={book.id}
                         className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"

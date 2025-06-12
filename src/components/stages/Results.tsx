@@ -1,7 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookMarked, Send, RefreshCw } from 'lucide-react';
 import { useQuiz } from '../../context/QuizContext';
 import Button from '../common/Button';
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+interface Recommendation {
+  title: string;
+  author: string;
+  link: string;
+}
+
+interface ReadingPlan {
+  month: string;
+  books: string[];
+}
 
 const Results: React.FC = () => {
   const { 
@@ -15,63 +29,57 @@ const Results: React.FC = () => {
     parentPhone,
     resetQuiz 
   } = useQuiz();
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
-  // Mock book recommendations based on user preferences
-  const generateRecommendations = () => {
-    // In a real app, this would use the collected data to generate personalized recommendations
-    // For now, we'll just return some mock recommendations
-    if (age && age <= 7) {
-      return [
-        { title: "Elephant & Piggie series", author: "Mo Willems", link: "#" },
-        { title: "Pete the Cat books", author: "James Dean", link: "#" },
-        { title: "Princess in Black series", author: "Shannon Hale", link: "#" },
-      ];
-    } else if (age && age <= 10) {
-      return [
-        { title: "Magic Tree House series", author: "Mary Pope Osborne", link: "#" },
-        { title: "Wings of Fire series", author: "Tui T. Sutherland", link: "#" },
-        { title: "The One and Only Ivan", author: "Katherine Applegate", link: "#" },
-      ];
-    } else {
-      return [
-        { title: "The Inheritance Games", author: "Jennifer Lynn Barnes", link: "#" },
-        { title: "Six of Crows", author: "Leigh Bardugo", link: "#" },
-        { title: "The Giver", author: "Lois Lowry", link: "#" },
-      ];
-    }
-  };
-  
-  const recommendations = generateRecommendations();
-  
-  // Calculate reading plan (3 books per month)
-  const generateReadingPlan = () => {
-    const months = ["January", "February", "March"];
-    const plan = [];
-    
-    for (let i = 0; i < 3; i++) {
-      plan.push({
-        month: months[i],
-        books: recommendations.map(rec => rec.title)
-      });
-    }
-    
-    return plan;
-  };
-  
-  const readingPlan = generateReadingPlan();
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [readingPlan, setReadingPlan] = useState<ReadingPlan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.post(`${API_BASE_URL}/recommendation-plan`, {
+          name,
+          age,
+          selectedGenres,
+          selectedInterests,
+          nonFictionInterests,
+          bookSeries,
+          parentEmail,
+          parentPhone
+        });
+
+        setRecommendations(response.data.recommendations);
+        setReadingPlan(response.data.readingPlan);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch recommendations. Please try again.');
+        console.error('Error fetching recommendations:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRecommendations();
+  }, [name, age, selectedGenres, selectedInterests, nonFictionInterests, bookSeries]);
 
   const handleEmailRecommendations = async () => {
     setIsSubmitting(true);
     setError(null);
     try {
-      // Here you would implement the API call to send recommendations via email
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
+      await axios.post(`${API_BASE_URL}/send-recommendations/email`, {
+        email: parentEmail,
+        recommendations,
+        readingPlan,
+        name
+      });
       setSuccess('Recommendations have been sent to your email!');
     } catch (err) {
       setError('Failed to send recommendations. Please try again.');
+      console.error('Error sending email:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -81,15 +89,37 @@ const Results: React.FC = () => {
     setIsSubmitting(true);
     setError(null);
     try {
-      // Here you would implement the API call to send recommendations via WhatsApp
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
+      await axios.post(`${API_BASE_URL}/send-recommendations/whatsapp`, {
+        phone: parentPhone,
+        recommendations,
+        readingPlan,
+        name
+      });
       setSuccess('Recommendations have been sent to your WhatsApp!');
     } catch (err) {
       setError('Failed to send recommendations. Please try again.');
+      console.error('Error sending WhatsApp message:', err);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center p-4">
+        <p className="text-red-600 mb-4">{error}</p>
+        <Button onClick={() => window.location.reload()}>Try Again</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fadeIn">
