@@ -8,7 +8,6 @@ interface Book {
   id: string;
   title: string;
   author: string;
-  description: string;
   genres: string[];
   ageRange: {
     min: number;
@@ -27,7 +26,6 @@ const BookList: React.FC = () => {
   const [formData, setFormData] = useState<Omit<Book, 'id'>>({
     title: '',
     author: '',
-    description: '',
     genres: [],
     ageRange: {
       min: 5,
@@ -74,7 +72,6 @@ const BookList: React.FC = () => {
       setFormData({
         title: '',
         author: '',
-        description: '',
         genres: [],
         ageRange: {
           min: 5,
@@ -256,18 +253,6 @@ const BookList: React.FC = () => {
                   value={formData.author}
                   onChange={(e) => setFormData({ ...formData, author: e.target.value })}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Description
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  rows={3}
                   required
                 />
               </div>
