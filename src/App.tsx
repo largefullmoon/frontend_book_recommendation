@@ -31,18 +31,30 @@ function App() {
             />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route
-              path="/admin/*"
+              path="/admin/books"
               element={
                 <AdminLayout>
-                  <Routes>
-                    <Route path="books" element={<BookList />} />
-                    <Route path="recommendations" element={<RecommendationManager />} />
-                    <Route path="users" element={<UserManagement />} />
-                    <Route path="*" element={<Navigate to="/admin/books" replace />} />
-                  </Routes>
+                  <BookList />
                 </AdminLayout>
               }
             />
+            <Route
+              path="/admin/recommendations"
+              element={
+                <AdminLayout>
+                  <RecommendationManager />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <AdminLayout>
+                  <UserManagement />
+                </AdminLayout>
+              }
+            />
+            <Route path="/admin/*" element={<Navigate to="/admin/books" replace />} />
           </Routes>
         </main>
 

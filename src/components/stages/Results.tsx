@@ -9,32 +9,33 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000
 interface Recommendation {
   title: string;
   author: string;
-  link: string;
+  explanation: string;
+  month: number;
 }
 
-interface ReadingPlan {
-  month: string;
-  books: string[];
+interface FutureMonth {
+  month: number;
+  books: Recommendation[];
 }
 
 const Results: React.FC = () => {
-  const { 
-    name, 
-    age, 
-    selectedGenres, 
-    selectedInterests, 
-    nonFictionInterests, 
-    bookSeries, 
-    parentEmail, 
+  const {
+    name,
+    age,
+    selectedGenres,
+    selectedInterests,
+    nonFictionInterests,
+    bookSeries,
+    parentEmail,
     parentPhone,
-    resetQuiz 
+    resetQuiz
   } = useQuiz();
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [readingPlan, setReadingPlan] = useState<ReadingPlan[]>([]);
+  const [currentRecommendations, setCurrentRecommendations] = useState<Recommendation[]>([]);
+  const [futureReadingPlan, setFutureReadingPlan] = useState<FutureMonth[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -51,9 +52,9 @@ const Results: React.FC = () => {
           parentEmail,
           parentPhone
         });
-
-        setRecommendations(response.data.recommendations);
-        setReadingPlan(response.data.readingPlan);
+        // Expecting { current: Recommendation[], future: FutureMonth[] }
+        setCurrentRecommendations(response.data.current);
+        setFutureReadingPlan(response.data.future);
         setError(null);
       } catch (err) {
         setError('Failed to fetch recommendations. Please try again.');
@@ -72,8 +73,8 @@ const Results: React.FC = () => {
     try {
       await axios.post(`${API_BASE_URL}/send-recommendations/email`, {
         email: parentEmail,
-        recommendations,
-        readingPlan,
+        current: currentRecommendations,
+        future: futureReadingPlan,
         name
       });
       setSuccess('Recommendations have been sent to your email!');
@@ -91,8 +92,8 @@ const Results: React.FC = () => {
     try {
       await axios.post(`${API_BASE_URL}/send-recommendations/whatsapp`, {
         phone: parentPhone,
-        recommendations,
-        readingPlan,
+        recommendations: currentRecommendations,
+        readingPlan: futureReadingPlan,
         name
       });
       setSuccess('Recommendations have been sent to your WhatsApp!');
@@ -134,11 +135,11 @@ const Results: React.FC = () => {
           Based on what you've told us, here are some books we think you'll love:
         </p>
       </div>
-      
+
       <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-5 rounded-lg mb-8 border border-indigo-100">
         <h3 className="font-bold text-lg mb-4 text-indigo-800">Your Book Recommendations:</h3>
         <div className="space-y-4">
-          {recommendations.map((book, index) => (
+          {currentRecommendations.map((book, index) => (
             <div key={index} className="flex items-start">
               <div className="bg-white p-2 rounded-lg shadow-sm">
                 <BookMarked className="w-4 h-4 text-indigo-500" />
@@ -146,41 +147,42 @@ const Results: React.FC = () => {
               <div className="ml-3">
                 <h4 className="font-medium text-indigo-900">{book.title}</h4>
                 <p className="text-sm text-gray-600">by {book.author}</p>
-                <a href={book.link} className="text-xs text-indigo-600 hover:underline">
-                  View on JustBookify
-                </a>
+                <p className="text-xs text-gray-500 mt-1">{book.explanation}</p>
               </div>
             </div>
           ))}
         </div>
       </div>
-      
+
       <div className="bg-gradient-to-br from-pink-50 to-orange-50 p-5 rounded-lg mb-8 border border-pink-100">
         <h3 className="font-bold text-lg mb-4 text-pink-800">Your 3-Month Reading Plan:</h3>
         <div className="space-y-4">
-          {readingPlan.map((month, index) => (
+          {futureReadingPlan.map((monthObj, index) => (
             <div key={index} className="bg-white p-3 rounded-lg shadow-sm">
-              <h4 className="font-medium text-pink-700">{month.month}</h4>
+              <h4 className="font-medium text-pink-700">Month {monthObj.month}</h4>
               <ul className="mt-2 list-disc list-inside text-sm text-gray-600">
-                {month.books.map((book, bookIndex) => (
-                  <li key={bookIndex}>{book}</li>
+                {monthObj.books.map((book, bookIndex) => (
+                  <li key={bookIndex} className="mb-2">
+                    <span className="font-semibold text-indigo-800">{book.title}</span> by {book.author}
+                    <div className="text-xs text-gray-500">{book.explanation}</div>
+                  </li>
                 ))}
               </ul>
             </div>
           ))}
         </div>
       </div>
-      
+
       <div className="bg-white p-5 rounded-lg border border-gray-200 mb-8">
         <h3 className="font-medium mb-3">Want to save these recommendations?</h3>
         <div className="space-y-4">
-          <button
+          {/* <button
             onClick={handleEmailRecommendations}
             disabled={isSubmitting}
             className="w-full p-4 brand-blue-bg text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send to Email ({parentEmail})
-          </button>
+          </button> */}
 
           <button
             onClick={handleWhatsAppRecommendations}
@@ -199,9 +201,9 @@ const Results: React.FC = () => {
           )}
         </div>
       </div>
-      
+
       <div className="flex justify-center">
-        <Button 
+        <Button
           onClick={resetQuiz}
           variant="outline"
           className="flex items-center"
