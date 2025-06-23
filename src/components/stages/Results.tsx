@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookMarked, Send, RefreshCw, BookOpen } from 'lucide-react';
+import { BookMarked, Send, RefreshCw, BookOpen, ExternalLink, Star, Calendar } from 'lucide-react';
 import { useQuiz } from '../../context/QuizContext';
 import Button from '../common/Button';
 import axios from 'axios';
@@ -129,17 +129,25 @@ const Results: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
+        <p className="text-indigo-600 font-medium">Finding the perfect books for you...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center p-4">
-        <p className="text-red-600 mb-4">{error}</p>
-        <Button onClick={() => window.location.reload()}>Try Again</Button>
+      <div className="text-center p-8 bg-red-50 rounded-lg">
+        <div className="mb-4 text-red-600">
+          <svg className="w-12 h-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-lg font-medium">{error}</p>
+        </div>
+        <Button onClick={() => window.location.reload()} className="bg-red-600 hover:bg-red-700 text-white">
+          Try Again
+        </Button>
       </div>
     );
   }
@@ -147,30 +155,37 @@ const Results: React.FC = () => {
   return (
     <div className="animate-fadeIn">
       <div className="text-center mb-8">
-        <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-          <BookMarked className="w-8 h-8 text-green-500" />
+        <div className="mx-auto w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center mb-4 shadow-lg">
+          <BookMarked className="w-10 h-10 text-white" />
         </div>
-        <h2 className="text-2xl font-bold text-indigo-800 mb-2">
-          Great job, {name}!
+        <h2 className="text-3xl font-bold text-indigo-800 mb-3">
+          Great job, {name}! 📚
         </h2>
-        <p className="text-gray-600">
-          Based on what you've told us, here are some books we think you'll love:
+        <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+          Based on your age ({age} years) and interests, we've curated a personalized reading journey just for you.
         </p>
       </div>
 
       {/* Current Recommendations */}
-      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-5 rounded-lg mb-8 border border-indigo-100">
-        <h3 className="font-bold text-lg mb-4 text-indigo-800">Your Immediate Book Recommendations:</h3>
-        <div className="space-y-4">
+      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-xl mb-8 border border-indigo-100 shadow-sm">
+        <h3 className="font-bold text-xl mb-5 text-indigo-800 flex items-center">
+          <Star className="w-6 h-6 mr-2 text-yellow-500" />
+          Top Picks for You
+        </h3>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {currentRecommendations.map((book, index) => (
-            <div key={index} className="flex items-start">
-              <div className="bg-white p-2 rounded-lg shadow-sm">
-                <BookMarked className="w-4 h-4 text-indigo-500" />
-              </div>
-              <div className="ml-3">
-                <h4 className="font-medium text-indigo-900">{book.title}</h4>
-                <p className="text-sm text-gray-600">by {book.author}</p>
-                <p className="text-xs text-gray-500 mt-1">{book.explanation}</p>
+            <div key={index} className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <BookMarked className="w-5 h-5 text-indigo-600" />
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-indigo-900 mb-1">{book.title}</h4>
+                  <p className="text-sm text-gray-600">by {book.author}</p>
+                  <p className="text-sm text-gray-500 mt-2 line-clamp-3">{book.explanation}</p>
+                </div>
               </div>
             </div>
           ))}
@@ -179,33 +194,41 @@ const Results: React.FC = () => {
 
       {/* Series/Author Recommendations */}
       {seriesRecommendations.length > 0 && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-lg mb-8 border border-blue-100">
-          <h3 className="font-bold text-lg mb-4 text-blue-800">Recommended Series & Authors:</h3>
-          <div className="space-y-6">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl mb-8 border border-blue-100 shadow-sm">
+          <h3 className="font-bold text-xl mb-5 text-blue-800 flex items-center">
+            <BookOpen className="w-6 h-6 mr-2 text-blue-600" />
+            Series & Authors You'll Love
+          </h3>
+          <div className="grid gap-6 md:grid-cols-2">
             {seriesRecommendations.map((rec, index) => (
-              <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-blue-900">{rec.name}</h4>
-                  <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                    Match: {rec.confidence_score}/10
-                  </span>
+              <div key={index} className="bg-white p-5 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-lg text-blue-900">{rec.name}</h4>
+                  <div className="flex items-center bg-blue-100 px-3 py-1 rounded-full">
+                    <Star className="w-4 h-4 text-yellow-500 mr-1" />
+                    <span className="text-sm font-medium text-blue-800">{rec.confidence_score}/10</span>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-2">{rec.rationale}</p>
+                <p className="text-gray-600 mb-3 line-clamp-3">{rec.rationale}</p>
                 <a 
                   href={rec.justbookify_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:text-blue-800 flex items-center mb-3"
+                  className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium mb-3 group"
                 >
-                  <BookOpen className="w-4 h-4 mr-1" />
-                  View on Justbookify
+                  <span>View on Justbookify</span>
+                  <ExternalLink className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
                 </a>
-                <div className="text-sm text-gray-500">
-                  <p className="font-medium mb-1">Sample Books:</p>
-                  <ul className="list-disc list-inside">
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <h5 className="font-medium text-gray-900 mb-2">Featured Books:</h5>
+                  <ul className="space-y-2">
                     {rec.sample_books.map((book, bookIndex) => (
-                      <li key={bookIndex}>
-                        {book.title} by {book.author}
+                      <li key={bookIndex} className="text-sm text-gray-600 flex items-start">
+                        <BookMarked className="w-4 h-4 mr-2 mt-1 text-blue-500" />
+                        <span>
+                          <span className="font-medium text-gray-800">{book.title}</span>
+                          <span className="block text-xs text-gray-500">by {book.author}</span>
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -217,19 +240,26 @@ const Results: React.FC = () => {
       )}
 
       {/* Future Reading Plan */}
-      <div className="bg-gradient-to-br from-pink-50 to-orange-50 p-5 rounded-lg mb-8 border border-pink-100">
-        <h3 className="font-bold text-lg mb-4 text-pink-800">Your 3-Month Reading Plan:</h3>
-        <div className="space-y-4">
+      <div className="bg-gradient-to-br from-pink-50 to-orange-50 p-6 rounded-xl mb-8 border border-pink-100 shadow-sm">
+        <h3 className="font-bold text-xl mb-5 text-pink-800 flex items-center">
+          <Calendar className="w-6 h-6 mr-2 text-pink-600" />
+          Your 3-Month Reading Journey
+        </h3>
+        <div className="grid gap-4 md:grid-cols-3">
           {futureReadingPlan.map((monthObj, index) => (
-            <div key={index} className="bg-white p-3 rounded-lg shadow-sm">
-              <h4 className="font-medium text-pink-700">{monthObj.month}</h4>
-              <ul className="mt-2 list-disc list-inside text-sm text-gray-600">
+            <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
+              <h4 className="font-semibold text-lg text-pink-700 mb-3">{monthObj.month}</h4>
+              <ul className="space-y-3">
                 {monthObj.books.map((book, bookIndex) => (
-                  <li key={bookIndex} className="mb-2">
-                    <span className="font-semibold text-indigo-800">{book.title}</span> by {book.author}
-                    <div className="text-xs text-gray-500">{book.explanation}</div>
+                  <li key={bookIndex} className="border-l-2 border-pink-200 pl-3">
+                    <div className="font-medium text-gray-900">{book.title}</div>
+                    <div className="text-sm text-gray-600">by {book.author}</div>
+                    <div className="text-sm text-gray-500 mt-1 line-clamp-2">{book.explanation}</div>
                   </li>
                 ))}
+                {monthObj.books.length === 0 && (
+                  <li className="text-gray-500 italic">More recommendations coming soon!</li>
+                )}
               </ul>
             </div>
           ))}
@@ -237,33 +267,37 @@ const Results: React.FC = () => {
       </div>
 
       {/* Share Options */}
-      <div className="bg-white p-5 rounded-lg border border-gray-200 mb-8">
-        <h3 className="font-medium mb-3">Want to save these recommendations?</h3>
+      <div className="bg-white p-6 rounded-xl border border-gray-200 mb-8 shadow-sm">
+        <h3 className="font-semibold text-lg mb-4 text-gray-800">Save Your Reading Journey</h3>
         <div className="space-y-4">
           <button
             onClick={handleEmailRecommendations}
             disabled={isSubmitting}
-            className="w-full p-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="w-full p-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group"
           >
-            <Send className="w-4 h-4 mr-2" />
+            <Send className="w-5 h-5 mr-2 transition-transform group-hover:-translate-y-1" />
             Send to Email ({parentEmail})
           </button>
 
           <button
             onClick={handleWhatsAppRecommendations}
             disabled={isSubmitting}
-            className="w-full p-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="w-full p-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group"
           >
-            <Send className="w-4 h-4 mr-2" />
+            <Send className="w-5 h-5 mr-2 transition-transform group-hover:-translate-y-1" />
             Send to WhatsApp ({parentPhone})
           </button>
 
           {success && (
-            <p className="text-green-600 text-center">{success}</p>
+            <div className="bg-green-50 text-green-700 p-3 rounded-lg text-center">
+              <p className="font-medium">{success}</p>
+            </div>
           )}
 
           {error && (
-            <p className="text-red-500 text-center">{error}</p>
+            <div className="bg-red-50 text-red-700 p-3 rounded-lg text-center">
+              <p className="font-medium">{error}</p>
+            </div>
           )}
         </div>
       </div>
@@ -273,10 +307,10 @@ const Results: React.FC = () => {
         <Button
           onClick={resetQuiz}
           variant="outline"
-          className="flex items-center"
+          className="flex items-center group hover:bg-gray-50"
         >
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Start Over
+          <RefreshCw className="w-5 h-5 mr-2 group-hover:rotate-180 transition-transform duration-500" />
+          Start New Reading Journey
         </Button>
       </div>
     </div>
