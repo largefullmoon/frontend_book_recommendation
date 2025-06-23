@@ -1,21 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { BookMarked, Send, RefreshCw } from 'lucide-react';
+import { BookMarked, Send, RefreshCw, BookOpen } from 'lucide-react';
 import { useQuiz } from '../../context/QuizContext';
 import Button from '../common/Button';
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
-interface Recommendation {
+interface Book {
   title: string;
   author: string;
   explanation: string;
-  month: number;
 }
 
 interface FutureMonth {
-  month: number;
-  books: Recommendation[];
+  month: string;
+  books: Book[];
+}
+
+interface SampleBook {
+  title: string;
+  author: string;
+}
+
+interface Recommendation {
+  name: string;
+  justbookify_link: string;
+  rationale: string;
+  confidence_score: number;
+  sample_books: SampleBook[];
+}
+
+interface RecommendationResponse {
+  current: Book[];
+  future: FutureMonth[];
+  recommendations: Recommendation[];
 }
 
 const Results: React.FC = () => {
@@ -34,15 +52,16 @@ const Results: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [currentRecommendations, setCurrentRecommendations] = useState<Recommendation[]>([]);
+  const [currentRecommendations, setCurrentRecommendations] = useState<Book[]>([]);
   const [futureReadingPlan, setFutureReadingPlan] = useState<FutureMonth[]>([]);
+  const [seriesRecommendations, setSeriesRecommendations] = useState<Recommendation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.post(`${API_BASE_URL}/recommendation-plan`, {
+        const response = await axios.post<RecommendationResponse>(`${API_BASE_URL}/recommendation-plan`, {
           name,
           age,
           selectedGenres,
@@ -52,9 +71,10 @@ const Results: React.FC = () => {
           parentEmail,
           parentPhone
         });
-        // Expecting { current: Recommendation[], future: FutureMonth[] }
+        
         setCurrentRecommendations(response.data.current);
         setFutureReadingPlan(response.data.future);
+        setSeriesRecommendations(response.data.recommendations);
         setError(null);
       } catch (err) {
         setError('Failed to fetch recommendations. Please try again.');
@@ -75,6 +95,7 @@ const Results: React.FC = () => {
         email: parentEmail,
         current: currentRecommendations,
         future: futureReadingPlan,
+        recommendations: seriesRecommendations,
         name
       });
       setSuccess('Recommendations have been sent to your email!');
@@ -92,8 +113,9 @@ const Results: React.FC = () => {
     try {
       await axios.post(`${API_BASE_URL}/send-recommendations/whatsapp`, {
         phone: parentPhone,
-        recommendations: currentRecommendations,
-        readingPlan: futureReadingPlan,
+        current: currentRecommendations,
+        future: futureReadingPlan,
+        recommendations: seriesRecommendations,
         name
       });
       setSuccess('Recommendations have been sent to your WhatsApp!');
@@ -136,8 +158,9 @@ const Results: React.FC = () => {
         </p>
       </div>
 
+      {/* Current Recommendations */}
       <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-5 rounded-lg mb-8 border border-indigo-100">
-        <h3 className="font-bold text-lg mb-4 text-indigo-800">Your Book Recommendations:</h3>
+        <h3 className="font-bold text-lg mb-4 text-indigo-800">Your Immediate Book Recommendations:</h3>
         <div className="space-y-4">
           {currentRecommendations.map((book, index) => (
             <div key={index} className="flex items-start">
@@ -154,12 +177,52 @@ const Results: React.FC = () => {
         </div>
       </div>
 
+      {/* Series/Author Recommendations */}
+      {seriesRecommendations.length > 0 && (
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-lg mb-8 border border-blue-100">
+          <h3 className="font-bold text-lg mb-4 text-blue-800">Recommended Series & Authors:</h3>
+          <div className="space-y-6">
+            {seriesRecommendations.map((rec, index) => (
+              <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium text-blue-900">{rec.name}</h4>
+                  <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    Match: {rec.confidence_score}/10
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 mb-2">{rec.rationale}</p>
+                <a 
+                  href={rec.justbookify_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:text-blue-800 flex items-center mb-3"
+                >
+                  <BookOpen className="w-4 h-4 mr-1" />
+                  View on Justbookify
+                </a>
+                <div className="text-sm text-gray-500">
+                  <p className="font-medium mb-1">Sample Books:</p>
+                  <ul className="list-disc list-inside">
+                    {rec.sample_books.map((book, bookIndex) => (
+                      <li key={bookIndex}>
+                        {book.title} by {book.author}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Future Reading Plan */}
       <div className="bg-gradient-to-br from-pink-50 to-orange-50 p-5 rounded-lg mb-8 border border-pink-100">
         <h3 className="font-bold text-lg mb-4 text-pink-800">Your 3-Month Reading Plan:</h3>
         <div className="space-y-4">
           {futureReadingPlan.map((monthObj, index) => (
             <div key={index} className="bg-white p-3 rounded-lg shadow-sm">
-              <h4 className="font-medium text-pink-700">Month {monthObj.month}</h4>
+              <h4 className="font-medium text-pink-700">{monthObj.month}</h4>
               <ul className="mt-2 list-disc list-inside text-sm text-gray-600">
                 {monthObj.books.map((book, bookIndex) => (
                   <li key={bookIndex} className="mb-2">
@@ -173,22 +236,25 @@ const Results: React.FC = () => {
         </div>
       </div>
 
+      {/* Share Options */}
       <div className="bg-white p-5 rounded-lg border border-gray-200 mb-8">
         <h3 className="font-medium mb-3">Want to save these recommendations?</h3>
         <div className="space-y-4">
-          {/* <button
+          <button
             onClick={handleEmailRecommendations}
             disabled={isSubmitting}
-            className="w-full p-4 brand-blue-bg text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full p-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
+            <Send className="w-4 h-4 mr-2" />
             Send to Email ({parentEmail})
-          </button> */}
+          </button>
 
           <button
             onClick={handleWhatsAppRecommendations}
             disabled={isSubmitting}
-            className="w-full p-4 brand-green-bg text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full p-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
+            <Send className="w-4 h-4 mr-2" />
             Send to WhatsApp ({parentPhone})
           </button>
 
@@ -202,6 +268,7 @@ const Results: React.FC = () => {
         </div>
       </div>
 
+      {/* Start Over Button */}
       <div className="flex justify-center">
         <Button
           onClick={resetQuiz}
