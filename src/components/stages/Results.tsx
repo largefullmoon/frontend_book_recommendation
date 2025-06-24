@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookMarked, Send, RefreshCw, BookOpen, ExternalLink, Star, Calendar } from 'lucide-react';
+import { BookMarked, Send, RefreshCw, BookOpen, ExternalLink, Star, Calendar, ThumbsDown, X } from 'lucide-react';
 import { useQuiz } from '../../context/QuizContext';
 import Button from '../common/Button';
 import axios from 'axios';
@@ -9,6 +9,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000
 interface Book {
   title: string;
   author: string;
+  series?: string;
   explanation: string;
 }
 
@@ -20,6 +21,7 @@ interface FutureMonth {
 interface SampleBook {
   title: string;
   author: string;
+  series?: string;
 }
 
 interface Recommendation {
@@ -55,7 +57,55 @@ const Results: React.FC = () => {
   const [currentRecommendations, setCurrentRecommendations] = useState<Book[]>([]);
   const [futureReadingPlan, setFutureReadingPlan] = useState<FutureMonth[]>([]);
   const [seriesRecommendations, setSeriesRecommendations] = useState<Recommendation[]>([]);
+  const [dislikedBooks, setDislikedBooks] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
+
+  // Helper function to get display name (series or author)
+  const getDisplayName = (book: Book | SampleBook) => {
+    return book.series || book.author;
+  };
+
+  // Helper function to get secondary info (author if series exists, empty if not)
+  const getSecondaryInfo = (book: Book | SampleBook) => {
+    return book.series ? `by ${book.author}` : '';
+  };
+
+  // Filter out disliked books
+  const filterDislikedBooks = (books: Book[]): Book[] => {
+    return books.filter(book => !dislikedBooks.has(`${book.title}-${book.author}`));
+  };
+
+  const handleDislikeBook = (book: Book) => {
+    const bookKey = `${book.title}-${book.author}`;
+    setDislikedBooks(prev => new Set([...prev, bookKey]));
+  };
+
+  const handleRefreshRecommendations = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.post<RecommendationResponse>(`${API_BASE_URL}/recommendation-plan`, {
+        name,
+        age,
+        selectedGenres,
+        selectedInterests,
+        nonFictionInterests,
+        bookSeries,
+        parentEmail,
+        parentPhone,
+        dislikedBooks: Array.from(dislikedBooks) // Send disliked books to backend
+      });
+      
+      setCurrentRecommendations(response.data.current);
+      setFutureReadingPlan(response.data.future);
+      setSeriesRecommendations(response.data.recommendations);
+      setError(null);
+    } catch (err) {
+      setError('Failed to refresh recommendations. Please try again.');
+      console.error('Error refreshing recommendations:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -91,10 +141,16 @@ const Results: React.FC = () => {
     setIsSubmitting(true);
     setError(null);
     try {
+      const filteredCurrent = filterDislikedBooks(currentRecommendations);
+      const filteredFuture = futureReadingPlan.map(month => ({
+        ...month,
+        books: filterDislikedBooks(month.books)
+      }));
+
       await axios.post(`${API_BASE_URL}/send-recommendations/email`, {
         email: parentEmail,
-        current: currentRecommendations,
-        future: futureReadingPlan,
+        current: filteredCurrent,
+        future: filteredFuture,
         recommendations: seriesRecommendations,
         name
       });
@@ -111,10 +167,16 @@ const Results: React.FC = () => {
     setIsSubmitting(true);
     setError(null);
     try {
+      const filteredCurrent = filterDislikedBooks(currentRecommendations);
+      const filteredFuture = futureReadingPlan.map(month => ({
+        ...month,
+        books: filterDislikedBooks(month.books)
+      }));
+
       await axios.post(`${API_BASE_URL}/send-recommendations/whatsapp`, {
         phone: parentPhone,
-        current: currentRecommendations,
-        future: futureReadingPlan,
+        current: filteredCurrent,
+        future: filteredFuture,
         recommendations: seriesRecommendations,
         name
       });
@@ -145,12 +207,24 @@ const Results: React.FC = () => {
           </svg>
           <p className="text-lg font-medium">{error}</p>
         </div>
-        <Button onClick={() => window.location.reload()} className="bg-red-600 hover:bg-red-700 text-white">
-          Try Again
-        </Button>
+        <div className="space-x-4">
+          <Button onClick={() => window.location.reload()} className="bg-red-600 hover:bg-red-700 text-white">
+            Try Again
+          </Button>
+          <Button onClick={handleRefreshRecommendations} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            Refresh Recommendations
+          </Button>
+        </div>
       </div>
     );
   }
+
+  // Filter current recommendations to remove disliked books
+  const filteredCurrentRecommendations = filterDislikedBooks(currentRecommendations);
+  const filteredFutureReadingPlan = futureReadingPlan.map(month => ({
+    ...month,
+    books: filterDislikedBooks(month.books)
+  }));
 
   return (
     <div className="animate-fadeIn">
@@ -164,6 +238,19 @@ const Results: React.FC = () => {
         <p className="text-gray-600 text-lg max-w-2xl mx-auto">
           Based on your age ({age} years) and interests, we've curated a personalized reading journey just for you.
         </p>
+        {dislikedBooks.size > 0 && (
+          <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+            <p className="text-yellow-800 text-sm">
+              {dislikedBooks.size} book{dislikedBooks.size > 1 ? 's' : ''} removed from recommendations
+            </p>
+            <button
+              onClick={handleRefreshRecommendations}
+              className="mt-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+            >
+              Get new recommendations
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Current Recommendations */}
@@ -173,23 +260,44 @@ const Results: React.FC = () => {
           Top Picks for You
         </h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {currentRecommendations.map((book, index) => (
-            <div key={index} className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          {filteredCurrentRecommendations.map((book, index) => (
+            <div key={index} className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow relative group">
+              <button
+                onClick={() => handleDislikeBook(book)}
+                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded-full"
+                title="Remove this book"
+              >
+                <ThumbsDown className="w-4 h-4 text-red-500" />
+              </button>
               <div className="flex items-start space-x-3">
                 <div className="flex-shrink-0">
                   <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
                     <BookMarked className="w-5 h-5 text-indigo-600" />
                   </div>
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-indigo-900 mb-1">{book.title}</h4>
-                  <p className="text-sm text-gray-600">by {book.author}</p>
+                  <p className="text-sm font-medium text-gray-700">{getDisplayName(book)}</p>
+                  {getSecondaryInfo(book) && (
+                    <p className="text-xs text-gray-500">{getSecondaryInfo(book)}</p>
+                  )}
                   <p className="text-sm text-gray-500 mt-2 line-clamp-3">{book.explanation}</p>
                 </div>
               </div>
             </div>
           ))}
         </div>
+        {filteredCurrentRecommendations.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <p>All current recommendations have been removed.</p>
+            <button
+              onClick={handleRefreshRecommendations}
+              className="mt-2 text-indigo-600 hover:text-indigo-800 font-medium"
+            >
+              Get new recommendations
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Series/Author Recommendations */}
@@ -227,7 +335,10 @@ const Results: React.FC = () => {
                         <BookMarked className="w-4 h-4 mr-2 mt-1 text-blue-500" />
                         <span>
                           <span className="font-medium text-gray-800">{book.title}</span>
-                          <span className="block text-xs text-gray-500">by {book.author}</span>
+                          <div className="text-xs text-gray-600">{getDisplayName(book)}</div>
+                          {getSecondaryInfo(book) && (
+                            <div className="text-xs text-gray-500">{getSecondaryInfo(book)}</div>
+                          )}
                         </span>
                       </li>
                     ))}
@@ -246,14 +357,24 @@ const Results: React.FC = () => {
           Your 3-Month Reading Journey
         </h3>
         <div className="grid gap-4 md:grid-cols-3">
-          {futureReadingPlan.map((monthObj, index) => (
+          {filteredFutureReadingPlan.map((monthObj, index) => (
             <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
               <h4 className="font-semibold text-lg text-pink-700 mb-3">{monthObj.month}</h4>
               <ul className="space-y-3">
                 {monthObj.books.map((book, bookIndex) => (
-                  <li key={bookIndex} className="border-l-2 border-pink-200 pl-3">
+                  <li key={bookIndex} className="border-l-2 border-pink-200 pl-3 relative group">
+                    <button
+                      onClick={() => handleDislikeBook(book)}
+                      className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded-full"
+                      title="Remove this book"
+                    >
+                      <X className="w-3 h-3 text-red-500" />
+                    </button>
                     <div className="font-medium text-gray-900">{book.title}</div>
-                    <div className="text-sm text-gray-600">by {book.author}</div>
+                    <div className="text-sm font-medium text-gray-700">{getDisplayName(book)}</div>
+                    {getSecondaryInfo(book) && (
+                      <div className="text-xs text-gray-500">{getSecondaryInfo(book)}</div>
+                    )}
                     <div className="text-sm text-gray-500 mt-1 line-clamp-2">{book.explanation}</div>
                   </li>
                 ))}
