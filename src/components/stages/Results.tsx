@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookMarked, Send, RefreshCw, BookOpen, ExternalLink, Star, Calendar, ThumbsDown, X, Library, Bookmark } from 'lucide-react';
+import { BookMarked, Send, RefreshCw, BookOpen, ExternalLink, Star, Calendar, ThumbsDown, X, Library } from 'lucide-react';
 import { useQuiz } from '../../context/QuizContext';
 import Button from '../common/Button';
 import axios from 'axios';
@@ -38,21 +38,6 @@ interface RecommendationResponse {
   recommendations: Recommendation[];
 }
 
-// Group books by series
-const groupBooksBySeries = (books: Book[]) => {
-  const groups: { [key: string]: Book[] } = {};
-  
-  books.forEach(book => {
-    const key = book.series || 'standalone';
-    if (!groups[key]) {
-      groups[key] = [];
-    }
-    groups[key].push(book);
-  });
-
-  return groups;
-};
-
 const Results: React.FC = () => {
   const {
     name,
@@ -75,57 +60,19 @@ const Results: React.FC = () => {
   const [dislikedBooks, setDislikedBooks] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
 
+  // Helper function to get display name (series or author)
+  const getDisplayName = (book: Book | SampleBook) => {
+    return book.series || `By ${book.author}`;
+  };
+
+  // Filter out disliked books
+  const filterDislikedBooks = (books: Book[]): Book[] => {
+    return books.filter(book => !dislikedBooks.has(`${book.title}-${book.author}`));
+  };
+
   const handleDislikeBook = (book: Book) => {
     const bookKey = `${book.title}-${book.author}`;
-    setDislikedBooks(prev => {
-      const newSet = new Set(prev);
-      newSet.add(bookKey);
-      return newSet;
-    });
-  };
-
-  const handleUndoDislike = (book: Book) => {
-    const bookKey = `${book.title}-${book.author}`;
-    setDislikedBooks(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(bookKey);
-      return newSet;
-    });
-  };
-
-  const isBookDisliked = (book: Book) => {
-    return dislikedBooks.has(`${book.title}-${book.author}`);
-  };
-
-  const filterDislikedBooks = (books: Book[]): Book[] => {
-    return books.filter(book => !isBookDisliked(book));
-  };
-
-  const handleRefreshRecommendations = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.post<RecommendationResponse>(`${API_BASE_URL}/recommendation-plan`, {
-        name,
-        age,
-        selectedGenres,
-        selectedInterests,
-        nonFictionInterests,
-        bookSeries,
-        parentEmail,
-        parentPhone,
-        dislikedBooks: Array.from(dislikedBooks) // Send disliked books to backend
-      });
-      
-      setCurrentRecommendations(response.data.current);
-      setFutureReadingPlan(response.data.future);
-      setSeriesRecommendations(response.data.recommendations);
-      setError(null);
-    } catch (err) {
-      setError('Failed to refresh recommendations. Please try again.');
-      console.error('Error refreshing recommendations:', err);
-    } finally {
-      setIsLoading(false);
-    }
+    setDislikedBooks(prev => new Set([...prev, bookKey]));
   };
 
   useEffect(() => {
@@ -162,16 +109,10 @@ const Results: React.FC = () => {
     setIsSubmitting(true);
     setError(null);
     try {
-      const filteredCurrent = filterDislikedBooks(currentRecommendations);
-      const filteredFuture = futureReadingPlan.map(month => ({
-        ...month,
-        books: filterDislikedBooks(month.books)
-      }));
-
       await axios.post(`${API_BASE_URL}/send-recommendations/email`, {
         email: parentEmail,
-        current: filteredCurrent,
-        future: filteredFuture,
+        current: currentRecommendations,
+        future: futureReadingPlan,
         recommendations: seriesRecommendations,
         name
       });
@@ -188,16 +129,10 @@ const Results: React.FC = () => {
     setIsSubmitting(true);
     setError(null);
     try {
-      const filteredCurrent = filterDislikedBooks(currentRecommendations);
-      const filteredFuture = futureReadingPlan.map(month => ({
-        ...month,
-        books: filterDislikedBooks(month.books)
-      }));
-
       await axios.post(`${API_BASE_URL}/send-recommendations/whatsapp`, {
         phone: parentPhone,
-        current: filteredCurrent,
-        future: filteredFuture,
+        current: currentRecommendations,
+        future: futureReadingPlan,
         recommendations: seriesRecommendations,
         name
       });
@@ -210,85 +145,6 @@ const Results: React.FC = () => {
     }
   };
 
-  const renderBookCard = (book: Book, showDislikeButton: boolean = true) => {
-    const isDisliked = isBookDisliked(book);
-    
-    return (
-      <div className={`relative bg-white rounded-lg shadow-sm transition-all duration-200 ${isDisliked ? 'opacity-50' : 'hover:shadow-md'}`}>
-        <div className="p-4">
-          {showDislikeButton && (
-            <div className="absolute top-2 right-2 flex space-x-2">
-              {isDisliked ? (
-                <button
-                  onClick={() => handleUndoDislike(book)}
-                  className="p-1.5 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors"
-                  title="Undo remove"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleDislikeBook(book)}
-                  className="p-1.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors"
-                  title="Remove from recommendations"
-                >
-                  <ThumbsDown className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          )}
-          
-          {/* Series Badge */}
-          {book.series && (
-            <div className="mb-3">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                <Library className="w-3 h-3 mr-1" />
-                {book.series} Series
-              </span>
-            </div>
-          )}
-          
-          {/* Book Title */}
-          <h4 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
-            {book.title}
-          </h4>
-          
-          {/* Author */}
-          <p className="text-sm text-gray-600 mb-2">
-            by {book.author}
-          </p>
-          
-          {/* Description */}
-          <p className="text-sm text-gray-500 line-clamp-3">
-            {book.explanation}
-          </p>
-        </div>
-      </div>
-    );
-  };
-
-  const renderSeriesGroup = (seriesName: string, books: Book[]) => {
-    const filteredBooks = filterDislikedBooks(books);
-    if (filteredBooks.length === 0) return null;
-
-    return (
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-xl font-semibold text-indigo-900 flex items-center">
-            <Bookmark className="w-5 h-5 mr-2 text-indigo-600" />
-            {seriesName === 'standalone' ? 'Individual Books' : seriesName}
-          </h4>
-          <span className="text-sm text-gray-500">
-            {filteredBooks.length} book{filteredBooks.length !== 1 ? 's' : ''}
-          </span>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredBooks.map((book, idx) => renderBookCard(book))}
-        </div>
-      </div>
-    );
-  };
-
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
@@ -298,13 +154,31 @@ const Results: React.FC = () => {
     );
   }
 
-  const groupedBooks = groupBooksBySeries(currentRecommendations);
-  const filteredGroupedBooks = Object.entries(groupedBooks)
-    .filter(([_, books]) => filterDislikedBooks(books).length > 0);
+  if (error) {
+    return (
+      <div className="text-center p-8 bg-red-50 rounded-lg">
+        <div className="mb-4 text-red-600">
+          <svg className="w-12 h-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-lg font-medium">{error}</p>
+        </div>
+        <Button onClick={() => window.location.reload()} className="bg-red-600 hover:bg-red-700 text-white">
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
+  // Filter current recommendations to remove disliked books
+  const filteredCurrentRecommendations = filterDislikedBooks(currentRecommendations);
+  const filteredFutureReadingPlan = futureReadingPlan.map(month => ({
+    ...month,
+    books: filterDislikedBooks(month.books)
+  }));
 
   return (
     <div className="animate-fadeIn">
-      {/* Header Section */}
       <div className="text-center mb-8">
         <div className="mx-auto w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center mb-4 shadow-lg">
           <BookMarked className="w-10 h-10 text-white" />
@@ -315,140 +189,186 @@ const Results: React.FC = () => {
         <p className="text-gray-600 text-lg max-w-2xl mx-auto">
           Based on your age ({age} years) and interests, we've curated a personalized reading journey just for you.
         </p>
-        
-        {dislikedBooks.size > 0 && (
-          <div className="mt-4 mx-auto max-w-2xl">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <p className="text-yellow-800">
-                  <span className="font-medium">{dislikedBooks.size}</span> book{dislikedBooks.size !== 1 ? 's' : ''} removed from recommendations
-                </p>
-                <button
-                  onClick={handleRefreshRecommendations}
-                  className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium hover:bg-yellow-200 transition-colors"
-                >
-                  Refresh List
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Main Content */}
-      <div className="space-y-8">
-        {/* Current Recommendations */}
-        <section className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-100">
-          <h3 className="text-2xl font-bold text-indigo-800 mb-6 flex items-center">
-            <Star className="w-7 h-7 mr-2 text-yellow-500" />
-            Recommended Books
-          </h3>
-          
-          {filteredGroupedBooks.length > 0 ? (
-            <div className="space-y-6">
-              {filteredGroupedBooks.map(([seriesName, books]) => 
-                renderSeriesGroup(seriesName, books)
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-8 bg-white rounded-lg">
-              <p className="text-gray-500 mb-4">All recommendations have been removed.</p>
+      {/* Current Recommendations */}
+      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-xl mb-8 border border-indigo-100 shadow-sm">
+        <h3 className="font-bold text-xl mb-5 text-indigo-800 flex items-center">
+          <Star className="w-6 h-6 mr-2 text-yellow-500" />
+          Top Picks for You
+        </h3>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredCurrentRecommendations.map((book, index) => (
+            <div key={index} className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow relative group">
               <button
-                onClick={handleRefreshRecommendations}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                onClick={() => handleDislikeBook(book)}
+                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded-full"
+                title="Remove this book"
               >
-                Get New Recommendations
+                <ThumbsDown className="w-4 h-4 text-red-500" />
               </button>
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <BookMarked className="w-5 h-5 text-indigo-600" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  {book.series && (
+                    <div className="mb-2">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                        <Library className="w-3 h-3 mr-1" />
+                        {book.series} Series
+                      </span>
+                    </div>
+                  )}
+                  <h4 className="font-semibold text-indigo-900 mb-1 line-clamp-2">{book.title}</h4>
+                  <p className="text-sm text-gray-600">{getDisplayName(book)}</p>
+                  <p className="text-sm text-gray-500 mt-2 line-clamp-3">{book.explanation}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Series/Author Recommendations */}
+      {seriesRecommendations.length > 0 && (
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl mb-8 border border-blue-100 shadow-sm">
+          <h3 className="font-bold text-xl mb-5 text-blue-800 flex items-center">
+            <BookOpen className="w-6 h-6 mr-2 text-blue-600" />
+            Series & Authors You'll Love
+          </h3>
+          <div className="grid gap-6 md:grid-cols-2">
+            {seriesRecommendations.map((rec, index) => (
+              <div key={index} className="bg-white p-5 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-lg text-blue-900">{rec.name}</h4>
+                  <div className="flex items-center bg-blue-100 px-3 py-1 rounded-full">
+                    <Star className="w-4 h-4 text-yellow-500 mr-1" />
+                    <span className="text-sm font-medium text-blue-800">{rec.confidence_score}/10</span>
+                  </div>
+                </div>
+                <p className="text-gray-600 mb-3 line-clamp-3">{rec.rationale}</p>
+                <a 
+                  href={rec.justbookify_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium mb-3 group"
+                >
+                  <span>View on Justbookify</span>
+                  <ExternalLink className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                </a>
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <h5 className="font-medium text-gray-900 mb-2">Featured Books:</h5>
+                  <ul className="space-y-2">
+                    {rec.sample_books.map((book, bookIndex) => (
+                      <li key={bookIndex} className="text-sm text-gray-600 flex items-start">
+                        <BookMarked className="w-4 h-4 mr-2 mt-1 text-blue-500" />
+                        <span>
+                          {book.series && (
+                            <div className="text-xs font-medium text-indigo-800 mb-0.5">
+                              {book.series} Series
+                            </div>
+                          )}
+                          <span className="font-medium text-gray-800">{book.title}</span>
+                          <span className="block text-xs text-gray-500">by {book.author}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Future Reading Plan */}
+      <div className="bg-gradient-to-br from-pink-50 to-orange-50 p-6 rounded-xl mb-8 border border-pink-100 shadow-sm">
+        <h3 className="font-bold text-xl mb-5 text-pink-800 flex items-center">
+          <Calendar className="w-6 h-6 mr-2 text-pink-600" />
+          Your 3-Month Reading Journey
+        </h3>
+        <div className="grid gap-4 md:grid-cols-3">
+          {filteredFutureReadingPlan.map((monthObj, index) => (
+            <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
+              <h4 className="font-semibold text-lg text-pink-700 mb-3">{monthObj.month}</h4>
+              <ul className="space-y-3">
+                {monthObj.books.map((book, bookIndex) => (
+                  <li key={bookIndex} className="border-l-2 border-pink-200 pl-3 relative group">
+                    <button
+                      onClick={() => handleDislikeBook(book)}
+                      className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded-full"
+                      title="Remove this book"
+                    >
+                      <X className="w-3 h-3 text-red-500" />
+                    </button>
+                    {book.series && (
+                      <div className="mb-1">
+                        <span className="text-xs font-medium text-indigo-800">{book.series} Series</span>
+                      </div>
+                    )}
+                    <div className="font-medium text-gray-900">{book.title}</div>
+                    <div className="text-sm text-gray-600">{getDisplayName(book)}</div>
+                    <div className="text-sm text-gray-500 mt-1 line-clamp-2">{book.explanation}</div>
+                  </li>
+                ))}
+                {monthObj.books.length === 0 && (
+                  <li className="text-gray-500 italic">More recommendations coming soon!</li>
+                )}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Share Options */}
+      <div className="bg-white p-6 rounded-xl border border-gray-200 mb-8 shadow-sm">
+        <h3 className="font-semibold text-lg mb-4 text-gray-800">Save Your Reading Journey</h3>
+        <div className="space-y-4">
+          <button
+            onClick={handleEmailRecommendations}
+            disabled={isSubmitting}
+            className="w-full p-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group"
+          >
+            <Send className="w-5 h-5 mr-2 transition-transform group-hover:-translate-y-1" />
+            Send to Email ({parentEmail})
+          </button>
+
+          <button
+            onClick={handleWhatsAppRecommendations}
+            disabled={isSubmitting}
+            className="w-full p-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group"
+          >
+            <Send className="w-5 h-5 mr-2 transition-transform group-hover:-translate-y-1" />
+            Send to WhatsApp ({parentPhone})
+          </button>
+
+          {success && (
+            <div className="bg-green-50 text-green-700 p-3 rounded-lg text-center">
+              <p className="font-medium">{success}</p>
             </div>
           )}
-        </section>
 
-        {/* Future Reading Plan */}
-        <section className="bg-gradient-to-br from-pink-50 to-orange-50 p-6 rounded-xl border border-pink-100">
-          <h3 className="text-2xl font-bold text-pink-800 mb-6 flex items-center">
-            <Calendar className="w-7 h-7 mr-2 text-pink-600" />
-            3-Month Reading Journey
-          </h3>
-          
-          <div className="grid gap-6 md:grid-cols-3">
-            {futureReadingPlan.map((month, index) => {
-              const filteredBooks = filterDislikedBooks(month.books);
-              
-              return (
-                <div key={index} className="bg-white rounded-lg shadow-sm p-4">
-                  <h4 className="text-lg font-semibold text-pink-700 mb-4">
-                    {month.month}
-                  </h4>
-                  
-                  {filteredBooks.length > 0 ? (
-                    <div className="space-y-4">
-                      {filteredBooks.map((book, bookIndex) => (
-                        <div key={bookIndex} className="border-l-2 border-pink-200 pl-3">
-                          {renderBookCard(book, false)}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 italic">
-                      More recommendations coming soon!
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Share Options */}
-        <section className="bg-white p-6 rounded-xl border border-gray-200">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">
-            Save Your Reading Journey
-          </h3>
-          
-          <div className="space-y-4">
-            <button
-              onClick={handleEmailRecommendations}
-              disabled={isSubmitting}
-              className="w-full p-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group"
-            >
-              <Send className="w-5 h-5 mr-2 transition-transform group-hover:-translate-y-1" />
-              Send to Email ({parentEmail})
-            </button>
-
-            <button
-              onClick={handleWhatsAppRecommendations}
-              disabled={isSubmitting}
-              className="w-full p-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group"
-            >
-              <Send className="w-5 h-5 mr-2 transition-transform group-hover:-translate-y-1" />
-              Send to WhatsApp ({parentPhone})
-            </button>
-
-            {success && (
-              <div className="bg-green-50 text-green-700 p-3 rounded-lg text-center">
-                <p className="font-medium">{success}</p>
-              </div>
-            )}
-
-            {error && (
-              <div className="bg-red-50 text-red-700 p-3 rounded-lg text-center">
-                <p className="font-medium">{error}</p>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Start Over Button */}
-        <div className="flex justify-center">
-          <Button
-            onClick={resetQuiz}
-            variant="outline"
-            className="flex items-center group hover:bg-gray-50"
-          >
-            <RefreshCw className="w-5 h-5 mr-2 group-hover:rotate-180 transition-transform duration-500" />
-            Start New Reading Journey
-          </Button>
+          {error && (
+            <div className="bg-red-50 text-red-700 p-3 rounded-lg text-center">
+              <p className="font-medium">{error}</p>
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* Start Over Button */}
+      <div className="flex justify-center">
+        <Button
+          onClick={resetQuiz}
+          variant="outline"
+          className="flex items-center group hover:bg-gray-50"
+        >
+          <RefreshCw className="w-5 h-5 mr-2 group-hover:rotate-180 transition-transform duration-500" />
+          Start New Reading Journey
+        </Button>
       </div>
     </div>
   );
