@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Upload } from 'lucide-react';
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
@@ -14,6 +14,16 @@ interface Book {
     max: number;
   };
   coverImage?: string;
+  tags: string[];
+  image?: string;
+  importedAt?: string;
+}
+
+interface ImportResponse {
+  message: string;
+  success_count: number;
+  error_count: number;
+  errors: string[];
 }
 
 const BookList: React.FC = () => {
@@ -23,14 +33,17 @@ const BookList: React.FC = () => {
   const [editingBook, setEditingBook] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [importResult, setImportResult] = useState<ImportResponse | null>(null);
   const [formData, setFormData] = useState<Omit<Book, 'id'>>({
     title: '',
     author: '',
     genres: [],
+    tags: [],
     ageRange: {
       min: 5,
       max: 18
-    }
+    },
+    image: ''
   });
 
   const fetchBooks = async () => {
@@ -76,7 +89,9 @@ const BookList: React.FC = () => {
         ageRange: {
           min: 5,
           max: 18
-        }
+        },
+        tags: [],
+        image: ''
       });
     } catch (err) {
       setError(editingBook ? 'Failed to update book.' : 'Failed to create book.');
@@ -107,18 +122,92 @@ const BookList: React.FC = () => {
     }
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check file extension
+    if (!file.name.endsWith('.csv')) {
+      setError('Invalid file format. Please upload a CSV file.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      setImportResult(null);
+
+      const response = await axios.post<ImportResponse>(
+        `${API_BASE_URL}/import-books`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      setImportResult(response.data);
+      // Refresh the book list after successful import
+      fetchBooks();
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else {
+        setError('Failed to import books. Please try again.');
+      }
+      console.error('Error importing books:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Book List</h1>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="brand-blue-bg text-white px-4 py-2 rounded-lg flex items-center hover:opacity-90"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add New Book
-        </button>
+        <div className="flex gap-4">
+          <label className="brand-blue-bg text-white px-4 py-2 rounded-lg flex items-center hover:opacity-90 cursor-pointer">
+            <Upload className="w-4 h-4 mr-2" />
+            Import CSV
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleFileUpload}
+              className="hidden"
+              disabled={isLoading}
+            />
+          </label>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="brand-blue-bg text-white px-4 py-2 rounded-lg flex items-center hover:opacity-90"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add New Book
+          </button>
+        </div>
       </div>
+
+      {importResult && (
+        <div className="mb-4 p-4 bg-white border rounded-lg shadow">
+          <h3 className="font-semibold mb-2">Import Results</h3>
+          <p>Successfully imported: {importResult.success_count} books</p>
+          <p>Failed to import: {importResult.error_count} books</p>
+          {importResult.errors.length > 0 && (
+            <div className="mt-2">
+              <p className="font-semibold">Errors:</p>
+              <ul className="list-disc list-inside text-sm text-red-600">
+                {importResult.errors.map((error, index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow p-6">
         {error && (
@@ -160,6 +249,12 @@ const BookList: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Genres
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Tags
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Imported
+                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
@@ -170,9 +265,9 @@ const BookList: React.FC = () => {
                   <tr key={book.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        {book.coverImage && (
+                        {(book.coverImage || book.image) && (
                           <img
-                            src={book.coverImage}
+                            src={book.coverImage || book.image}
                             alt={book.title}
                             className="w-10 h-10 rounded object-cover mr-3"
                           />
@@ -199,6 +294,21 @@ const BookList: React.FC = () => {
                           </span>
                         ))}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-wrap gap-1">
+                        {book.tags?.map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {book.importedAt && new Date(book.importedAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
@@ -291,6 +401,45 @@ const BookList: React.FC = () => {
                     required
                   />
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Genres (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={formData.genres.join(', ')}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    genres: e.target.value.split(',').map(g => g.trim()).filter(Boolean)
+                  })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Tags (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={formData.tags.join(', ')}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean)
+                  })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Cover Image URL
+                </label>
+                <input
+                  type="url"
+                  value={formData.image || ''}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
               </div>
               <div className="flex justify-end space-x-3 mt-6">
                 <button

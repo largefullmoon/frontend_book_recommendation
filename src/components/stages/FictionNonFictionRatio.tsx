@@ -36,27 +36,32 @@ const FictionNonFictionRatio: React.FC = () => {
             onClick={() => setSelectedRatio(ratio.fiction)}
             className={`w-full p-6 rounded-lg text-left transition-all ${
               selectedRatio === ratio.fiction
-                ? index % 2 === 0
-                  ? 'brand-blue-bg text-white'
-                  : 'brand-green-bg text-white'
+                ? 'bg-indigo-600 text-white'
                 : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
             <div className="flex justify-between items-center">
-              <span className="font-medium">
-                {ratio.fiction}% Fiction / {ratio.nonfiction}% Non-Fiction
-              </span>
-              {selectedRatio === ratio.fiction && (
-                <span className="ml-2">✓</span>
-              )}
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
+                  ${selectedRatio === ratio.fiction 
+                    ? 'border-white bg-indigo-600' 
+                    : 'border-gray-400 bg-white'
+                  }`}
+                >
+                  {selectedRatio === ratio.fiction && (
+                    <div className="w-2.5 h-2.5 rounded-full bg-white" />
+                  )}
+                </div>
+                <span className="font-medium">
+                  {ratio.fiction}% Fiction / {ratio.nonfiction}% Non-Fiction
+                </span>
+              </div>
             </div>
             <div className="mt-2 bg-white rounded-full h-2 overflow-hidden">
               <div
                 className={`h-full ${
                   selectedRatio === ratio.fiction
-                    ? index % 2 === 0
-                      ? 'bg-[#54d9ff]'
-                      : 'bg-[#aadb4d]'
+                    ? 'bg-indigo-400'
                     : 'bg-indigo-600'
                 }`}
                 style={{ width: `${ratio.fiction}%` }}

@@ -1,17 +1,19 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { api } from '../services/api';
 
 type QuizStage = 
   | 'start' 
   | 'parentConsent'
   | 'name' 
   | 'age' 
-  | 'parentContact'
   | 'parentReading'
   | 'genreYoung' 
   | 'genreNonFiction' 
   | 'youngInterests'
-  | 'topThreeGenres'
+  | 'fictionGenres'
+  | 'nonFictionGenres'
   | 'additionalGenres'
+  | 'additionalGenresYoung'
   | 'fictionNonFictionRatio'
   | 'bookSeries'
   | 'results';
@@ -52,6 +54,10 @@ interface QuizContextType {
   setParentPhone: (phone: string) => void;
   topThreeGenres: string[];
   setTopThreeGenres: (genres: string[]) => void;
+  fictionGenres: string[];
+  setFictionGenres: (genres: string[]) => void;
+  nonFictionGenres: string[];
+  setNonFictionGenres: (genres: string[]) => void;
   additionalGenres: string[];
   setAdditionalGenres: (genres: string[]) => void;
   fictionNonFictionRatio: number;
@@ -60,6 +66,9 @@ interface QuizContextType {
   nextStage: () => void;
   prevStage: () => void;
   resetQuiz: () => void;
+  userId: string | null;
+  saveError: string | null;
+  isSaving: boolean;
 }
 
 const QuizContext = createContext<QuizContextType | undefined>(undefined);
@@ -85,8 +94,13 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [parentEmail, setParentEmail] = useState('');
   const [parentPhone, setParentPhone] = useState('');
   const [topThreeGenres, setTopThreeGenres] = useState<string[]>([]);
+  const [fictionGenres, setFictionGenres] = useState<string[]>([]);
+  const [nonFictionGenres, setNonFictionGenres] = useState<string[]>([]);
   const [additionalGenres, setAdditionalGenres] = useState<string[]>([]);
   const [fictionNonFictionRatio, setFictionNonFictionRatio] = useState(50);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Calculate progress based on current stage and total stages
   const calculateProgress = (): number => {
@@ -99,6 +113,10 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       'genreYoung',
       'genreNonFiction',
       'youngInterests',
+      'fictionGenres',
+      'nonFictionGenres',
+      'additionalGenres',
+      'fictionNonFictionRatio',
       'bookSeries',
       'results'
     ];
@@ -110,6 +128,10 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (s === 'parentReading' && age > 7) return false;
       if (s === 'genreYoung' && (age < 6 || age > 10)) return false;
       if (s === 'youngInterests' && age > 5) return false;
+      if (s === 'fictionGenres' && age <= 10) return false;
+      if (s === 'nonFictionGenres' && age <= 10) return false;
+      if (s === 'additionalGenres' && age <= 10) return false;
+      if (s === 'fictionNonFictionRatio' && age <= 10) return false;
       
       return true;
     });
@@ -120,7 +142,38 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const progress = calculateProgress();
 
-  const updateBookSeriesResponse = (
+  // Helper function to save current state to database
+  const saveCurrentState = async () => {
+    if (!userId) return;
+    
+    setIsSaving(true);
+    setSaveError(null);
+    
+    try {
+      await api.updateUserData({
+        userId,
+        name: name || undefined,
+        age,
+        parentReading,
+        selectedGenres: selectedGenres.length > 0 ? selectedGenres : undefined,
+        selectedInterests: selectedInterests.length > 0 ? selectedInterests : undefined,
+        nonFictionInterests: nonFictionInterests.length > 0 ? nonFictionInterests : undefined,
+        topThreeGenres: topThreeGenres.length > 0 ? topThreeGenres : undefined,
+        fictionGenres: fictionGenres.length > 0 ? fictionGenres : undefined,
+        nonFictionGenres: nonFictionGenres.length > 0 ? nonFictionGenres : undefined,
+        additionalGenres: additionalGenres.length > 0 ? additionalGenres : undefined,
+        fictionNonFictionRatio,
+        bookSeries: bookSeries.length > 0 ? bookSeries : undefined
+      });
+    } catch (error) {
+      console.error('Failed to save current state:', error);
+      setSaveError('Failed to save progress. Your data may not be saved.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const updateBookSeriesResponse = async (
     seriesId: string, 
     hasRead: boolean,
     response?: 'love' | 'like' | 'dontReadAnymore' | 'didNotEnjoy'
@@ -138,47 +191,169 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return [...prev, { seriesId, hasRead, response: response || null }];
       }
     });
+
+    // Save individual response to backend
+    if (userId && response) {
+      try {
+        await api.saveBookSeriesResponse(userId, seriesId, hasRead, response);
+      } catch (error) {
+        console.error('Failed to save book series response:', error);
+        setSaveError('Failed to save book preference.');
+      }
+    }
   };
 
-  const nextStage = () => {
+  const nextStage = async () => {
     const stageMap: Record<QuizStage, QuizStage> = {
       'start': 'parentConsent',
-      'parentConsent': 'parentContact',
-      'parentContact': 'name',
+      'parentConsent': 'name',
       'name': 'age',
       'age': age && age <= 7 ? 'parentReading' : getGenreStageForAge(),
       'parentReading': getGenreStageForAge(),
-      'genreYoung': 'bookSeries',
-      'topThreeGenres': age && age >= 11 ? 'fictionNonFictionRatio' : 'additionalGenres',
-      'additionalGenres': 'bookSeries',
-      'fictionNonFictionRatio': 'bookSeries',
+      'genreYoung': 'additionalGenresYoung',
       'genreNonFiction': 'bookSeries',
       'youngInterests': 'bookSeries',
+      'fictionGenres': 'nonFictionGenres',
+      'nonFictionGenres': 'additionalGenres',
+      'additionalGenres': 'fictionNonFictionRatio',
+      'additionalGenresYoung': 'bookSeries',
+      'fictionNonFictionRatio': 'bookSeries',
       'bookSeries': 'results',
       'results': 'start'
     };
+
+    // Save data based on current stage before moving to next
+    setIsSaving(true);
+    setSaveError(null);
+    
+    try {
+      switch (stage) {
+        case 'parentConsent':
+          if (parentEmail && parentPhone) {
+            const consentResponse = await api.saveParentConsent(parentEmail, parentPhone);
+            setUserId(consentResponse.userId);
+          }
+          break;
+
+        case 'name':
+        case 'age':
+          if (userId && name && age !== null) {
+            await api.updateUserBasicInfo(userId, name, age);
+          }
+          break;
+
+        case 'parentReading':
+          if (userId && parentReading) {
+            await api.updateParentReading(userId, parentReading);
+          }
+          break;
+
+        case 'genreYoung':
+          if (userId && selectedGenres.length > 0) {
+            await api.updateGenrePreferences(userId, { selectedGenres });
+          }
+          break;
+
+        case 'youngInterests':
+          if (userId && selectedInterests.length > 0) {
+            await api.updateInterests(userId, selectedInterests);
+          }
+          break;
+
+        case 'fictionGenres':
+          if (userId && fictionGenres.length > 0) {
+            await api.updateGenrePreferences(userId, { fictionGenres });
+          }
+          break;
+
+        case 'nonFictionGenres':
+          if (userId && nonFictionGenres.length > 0) {
+            await api.updateGenrePreferences(userId, { nonFictionGenres });
+          }
+          break;
+
+        case 'additionalGenres':
+          if (userId && additionalGenres.length > 0) {
+            await api.updateGenrePreferences(userId, { additionalGenres });
+          }
+          break;
+
+        case 'additionalGenresYoung':
+          if (userId && additionalGenres.length > 0) {
+            await api.updateGenrePreferences(userId, { additionalGenres });
+          }
+          break;
+
+        case 'fictionNonFictionRatio':
+          if (userId) {
+            await api.updateGenrePreferences(userId, { fictionNonFictionRatio });
+          }
+          break;
+
+        case 'bookSeries':
+          if (userId && bookSeries.length > 0) {
+            await api.updateBookSeriesResponses(userId, bookSeries);
+          }
+          break;
+
+        case 'results':
+          // Complete quiz with all data
+          if (userId) {
+            await api.completeQuiz({
+              userId,
+              name,
+              age,
+              parentEmail,
+              parentPhone,
+              parentReading,
+              selectedGenres,
+              selectedInterests,
+              nonFictionInterests,
+              topThreeGenres,
+              fictionGenres,
+              nonFictionGenres,
+              additionalGenres,
+              fictionNonFictionRatio,
+              bookSeries,
+              completedAt: new Date().toISOString()
+            });
+          }
+          break;
+      }
+
+      // Save current state after each stage
+      await saveCurrentState();
+      
+    } catch (error) {
+      console.error('Failed to save stage data:', error);
+      setSaveError('Failed to save your progress. Please try again.');
+      // Don't prevent moving to next stage, but show error
+    } finally {
+      setIsSaving(false);
+    }
     
     setStage(stageMap[stage]);
   };
 
   const getGenreStageForAge = (): QuizStage => {
-    if (age === null) return 'topThreeGenres';
+    if (age === null) return 'fictionGenres';
     if (age <= 5) return 'youngInterests';
     if (age >= 6 && age <= 10) return 'genreYoung';
-    return 'topThreeGenres';
+    return 'fictionGenres';
   };
 
   const prevStage = () => {
     const reverseStageMap: Record<QuizStage, QuizStage> = {
       'start': 'start',
       'parentConsent': 'start',
-      'parentContact': 'parentConsent',
-      'name': 'parentContact',
+      'name': 'parentConsent',
       'age': 'name',
       'parentReading': 'age',
-      'topThreeGenres': age && age <= 7 ? 'parentReading' : 'age',
-      'fictionNonFictionRatio': 'topThreeGenres',
-      'additionalGenres': 'topThreeGenres',
+      'fictionGenres': age && age <= 7 ? 'parentReading' : 'age',
+      'nonFictionGenres': 'fictionGenres',
+      'fictionNonFictionRatio': 'additionalGenres',
+      'additionalGenres': 'nonFictionGenres',
+      'additionalGenresYoung': 'genreYoung',
       'genreNonFiction': 'fictionNonFictionRatio',
       'youngInterests': 'age',
       'genreYoung': age && age <= 7 ? 'parentReading' : 'age',
@@ -192,8 +367,8 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const getPreviousStageForBookSeries = (): QuizStage => {
     if (age === null) return 'genreNonFiction';
     if (age <= 5) return 'youngInterests';
-    if (age >= 6 && age <= 10) return 'genreYoung';
-    return 'genreNonFiction';
+    if (age >= 6 && age <= 10) return 'additionalGenresYoung';
+    return 'fictionNonFictionRatio';
   };
 
   const resetQuiz = () => {
@@ -209,8 +384,13 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setParentEmail('');
     setParentPhone('');
     setTopThreeGenres([]);
+    setFictionGenres([]);
+    setNonFictionGenres([]);
     setAdditionalGenres([]);
     setFictionNonFictionRatio(50);
+    setUserId(null);
+    setSaveError(null);
+    setIsSaving(false);
   };
 
   return (
@@ -241,6 +421,10 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setParentPhone,
         topThreeGenres,
         setTopThreeGenres,
+        fictionGenres,
+        setFictionGenres,
+        nonFictionGenres,
+        setNonFictionGenres,
         additionalGenres,
         setAdditionalGenres,
         fictionNonFictionRatio,
@@ -248,7 +432,10 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         progress,
         nextStage,
         prevStage,
-        resetQuiz
+        resetQuiz,
+        userId,
+        saveError,
+        isSaving
       }}
     >
       {children}

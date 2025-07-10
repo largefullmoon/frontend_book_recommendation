@@ -27,6 +27,7 @@ const BookSeries: React.FC = () => {
   const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Get age group based on user's age
   const getAgeGroup = () => {
@@ -73,10 +74,8 @@ const BookSeries: React.FC = () => {
     return found?.response || null;
   };
   
-  const handleSeriesClick = (seriesId: string) => {
-    const hasRead = !hasReadSeries(seriesId);
+  const handleReadStatusChange = (seriesId: string, hasRead: boolean) => {
     updateBookSeriesResponse(seriesId, hasRead);
-    
     if (hasRead) {
       setActiveSeries(seriesId);
     } else {
@@ -88,8 +87,69 @@ const BookSeries: React.FC = () => {
     updateBookSeriesResponse(seriesId, true, response);
     setActiveSeries(null);
   };
+
+  const validateResponses = () => {
+    const currentSeriesIds = currentSeries.map(book => book.id);
+    const allResponded = currentSeriesIds.every(id => 
+      bookSeries.some(item => item.seriesId === id)
+    );
+    return allResponded;
+  };
   
   const handleNextPage = () => {
+    if (!validateResponses()) {
+      setValidationError("Please select 'Read' or 'Didn't Read' for all books before proceeding.");
+      return;
+    }
+    setValidationError(null);
+
+    // Check for edge cases before proceeding
+    const allBooksResponses = bookSeries.filter(item => 
+      currentSeries.some(book => book.id === item.seriesId)
+    );
+    
+    const readBooks = allBooksResponses.filter(item => item.hasRead);
+    const negativeResponses = readBooks.filter(item => 
+      item.response === 'dontReadAnymore' || item.response === 'didNotEnjoy'
+    );
+
+    // If no books were read and we're on the last page, show a message
+    if (readBooks.length === 0 && currentPage === totalPages - 1) {
+      const allBookResponses = bookSeries.filter(item => 
+        recommendedBooks.some(book => book.id === item.seriesId)
+      );
+      const allReadBooks = allBookResponses.filter(item => item.hasRead);
+      
+      if (allReadBooks.length === 0) {
+        setValidationError("No worries! We'll find books perfect for you based on your interests and preferences. Let's continue to get your personalized recommendations!");
+        setTimeout(() => {
+          setValidationError(null);
+          nextStage();
+        }, 3000);
+        return;
+      }
+    }
+
+    // If all read books have negative responses and we're on the last page, show encouragement
+    if (readBooks.length > 0 && negativeResponses.length === readBooks.length && currentPage === totalPages - 1) {
+      const allBookResponses = bookSeries.filter(item => 
+        recommendedBooks.some(book => book.id === item.seriesId)
+      );
+      const allReadBooks = allBookResponses.filter(item => item.hasRead);
+      const allNegativeResponses = allReadBooks.filter(item => 
+        item.response === 'dontReadAnymore' || item.response === 'didNotEnjoy'
+      );
+      
+      if (allReadBooks.length > 0 && allNegativeResponses.length === allReadBooks.length) {
+        setValidationError("That's perfectly fine! Everyone has different tastes. We'll use your genre preferences and interests to find books that are a better match for you!");
+        setTimeout(() => {
+          setValidationError(null);
+          nextStage();
+        }, 3000);
+        return;
+      }
+    }
+
     if (currentPage < totalPages - 1) {
       setCurrentPage(prev => prev + 1);
       setActiveSeries(null);
@@ -167,39 +227,60 @@ const BookSeries: React.FC = () => {
           Have you read these books?
         </h2>
         <p className="text-gray-600">
-          Tap on any book series you've read, {name}!
+          Please select whether you've read each book, {name}!
         </p>
         <p className="text-sm text-gray-500 mt-1">
           Page {currentPage + 1} of {totalPages}
         </p>
       </div>
       
+      {validationError && (
+        <div className={`mb-4 p-3 rounded-lg ${
+          validationError.includes("No worries") || validationError.includes("perfectly fine") 
+            ? "bg-blue-100 text-blue-700 border border-blue-200" 
+            : "bg-red-100 text-red-700 border border-red-200"
+        }`}>
+          {validationError}
+        </div>
+      )}
+
       <div className="space-y-4 mb-8">
         {currentSeries.map((book) => (
           <div key={book.id}>
-            <Card
-              selected={hasReadSeries(book.id)}
-              selectable
-              onClick={() => handleSeriesClick(book.id)}
-              className="p-4"
-            >
-              <div className="flex items-center justify-between">
+            <Card className="p-4">
+              <div className="space-y-3">
                 <div>
                   <h3 className="font-medium">{book.title}</h3>
                   <p className="text-sm text-gray-600">{book.author}</p>
-                  {hasReadSeries(book.id) && getSeriesResponse(book.id) && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      Your opinion: {getResponseEmoji(getSeriesResponse(book.id))}
-                    </p>
-                  )}
                 </div>
                 
-                {hasReadSeries(book.id) ? (
-                  <div className="h-6 w-6 rounded-full bg-indigo-100 flex items-center justify-center">
-                    <div className="h-4 w-4 rounded-full bg-indigo-600"></div>
-                  </div>
-                ) : (
-                  <span className="text-sm text-gray-500">Not read</span>
+                <div className="flex gap-4">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name={`readStatus-${book.id}`}
+                      checked={hasReadSeries(book.id)}
+                      onChange={() => handleReadStatusChange(book.id, true)}
+                      className="form-radio text-indigo-600"
+                    />
+                    <span className="text-sm">Read</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name={`readStatus-${book.id}`}
+                      checked={bookSeries.some(item => item.seriesId === book.id && !item.hasRead)}
+                      onChange={() => handleReadStatusChange(book.id, false)}
+                      className="form-radio text-indigo-600"
+                    />
+                    <span className="text-sm">Didn't Read</span>
+                  </label>
+                </div>
+
+                {hasReadSeries(book.id) && getSeriesResponse(book.id) && (
+                  <p className="text-sm text-gray-600">
+                    Your opinion: {getResponseEmoji(getSeriesResponse(book.id))}
+                  </p>
                 )}
               </div>
             </Card>
@@ -217,11 +298,32 @@ const BookSeries: React.FC = () => {
           {currentPage > 0 ? 'Previous Page' : 'Back'}
         </Button>
         
-        <Button 
-          onClick={handleNextPage}
-        >
-          {currentPage < totalPages - 1 ? 'Next Page' : 'Finish'}
-        </Button>
+        <div className="flex gap-3">
+          {/* Skip Books Button - only show if no books have been marked as read */}
+          {bookSeries.filter(item => 
+            recommendedBooks.some(book => book.id === item.seriesId) && item.hasRead
+          ).length === 0 && (
+            <Button 
+              variant="outline"
+              onClick={() => {
+                setValidationError("No problem! We'll find great books for you based on your interests and preferences.");
+                setTimeout(() => {
+                  setValidationError(null);
+                  nextStage();
+                }, 2000);
+              }}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              Skip Books
+            </Button>
+          )}
+          
+          <Button 
+            onClick={handleNextPage}
+          >
+            {currentPage < totalPages - 1 ? 'Next Page' : 'Finish'}
+          </Button>
+        </div>
       </div>
     </div>
   );

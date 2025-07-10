@@ -4,13 +4,33 @@ import { useQuiz } from '../../context/QuizContext';
 import Button from '../common/Button';
 
 const ParentConsent: React.FC = () => {
-  const { nextStage, prevStage, setContactInfo } = useQuiz();
-  const [contact, setContact] = useState('');
+  const { nextStage, prevStage, setParentEmail, setParentPhone } = useQuiz();
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [hasConsent, setHasConsent] = useState(false);
+  const [error, setError] = useState('');
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setContactInfo(contact);
+
+    // Validate contact information
+    if (!email && !phone) {
+      setError('Please provide either an email address or phone number.');
+      return;
+    }
+
+    if (email && !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    if (phone && !phone.match(/^\+?[\d\s-]{10,}$/)) {
+      setError('Please enter a valid phone number.');
+      return;
+    }
+
+    setParentEmail(email);
+    setParentPhone(phone);
     nextStage();
   };
   
@@ -32,21 +52,45 @@ const ParentConsent: React.FC = () => {
       
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label htmlFor="contact" className="block text-sm font-medium text-gray-700 mb-1">
-            Your Email or Phone Number (Optional)
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            Email Address
           </label>
           <input
-            type="text"
-            id="contact"
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError('');
+            }}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="email@example.com or phone number"
+            placeholder="email@example.com"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+            Phone Number
+          </label>
+          <input
+            type="tel"
+            id="phone"
+            value={phone}
+            onChange={(e) => {
+              setPhone(e.target.value);
+              setError('');
+            }}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="+1 (123) 456-7890"
           />
           <p className="mt-1 text-xs text-gray-500">
-            We'll use this to send you their book recommendations
+            We'll use these to send you their book recommendations
           </p>
         </div>
+
+        {error && (
+          <p className="text-red-500 text-sm">{error}</p>
+        )}
         
         <div className="flex items-start">
           <div className="flex items-center h-5">

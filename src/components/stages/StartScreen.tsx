@@ -17,7 +17,8 @@ const StartScreen: React.FC = () => {
 
       <div className="max-w-md mx-auto">
         <p className="text-lg text-gray-700 mb-8">
-          Welcome to JustBookify's Book Buddy! Let's find your perfect next read with a fun, quick quiz.
+          Hi there! I'm Bookie, your reading buddy at JustBookify.com<br />
+          Let me help you find your next favorite books. It's fun and easy! Take a quick quiz with me, and I'll help you discover books you'll love.
         </p>
 
         <div className="flex flex-col space-y-4 items-center">

@@ -3,13 +3,15 @@ import { useQuiz } from '../context/QuizContext';
 import ProgressBar from './ProgressBar';
 import StartScreen from './stages/StartScreen';
 import ParentConsent from './stages/ParentConsent';
-import ParentContact from './stages/ParentContact';
 import NameInput from './stages/NameInput';
 import AgeInput from './stages/AgeInput';
 import ParentReading from './stages/ParentReading';
 import GenreYoung from './stages/GenreYoung';
 import TopThreeGenres from './stages/TopThreeGenres';
+import FictionGenres from './stages/FictionGenres';
+import NonFictionGenres from './stages/NonFictionGenres';
 import AdditionalGenres from './stages/AdditionalGenres';
+import AdditionalGenresYoung from './stages/AdditionalGenresYoung';
 import FictionNonFictionRatio from './stages/FictionNonFictionRatio';
 import GenreNonFiction from './stages/GenreNonFiction';
 import YoungInterests from './stages/YoungInterests';
@@ -17,7 +19,7 @@ import BookSeries from './stages/BookSeries';
 import Results from './stages/Results';
 
 const QuizContainer: React.FC = () => {
-  const { stage, progress } = useQuiz();
+  const { stage, progress, saveError, isSaving } = useQuiz();
   
   const renderStage = () => {
     switch (stage) {
@@ -25,8 +27,6 @@ const QuizContainer: React.FC = () => {
         return <StartScreen />;
       case 'parentConsent':
         return <ParentConsent />;
-      case 'parentContact':
-        return <ParentContact />;
       case 'name':
         return <NameInput />;
       case 'age':
@@ -35,10 +35,14 @@ const QuizContainer: React.FC = () => {
         return <ParentReading />;
       case 'genreYoung':
         return <GenreYoung />;
-      case 'topThreeGenres':
-        return <TopThreeGenres />;
+      case 'fictionGenres':
+        return <FictionGenres />;
+      case 'nonFictionGenres':
+        return <NonFictionGenres />;
       case 'additionalGenres':
         return <AdditionalGenres />;
+      case 'additionalGenresYoung':
+        return <AdditionalGenresYoung />;
       case 'fictionNonFictionRatio':
         return <FictionNonFictionRatio />;
       case 'genreNonFiction':
@@ -59,6 +63,18 @@ const QuizContainer: React.FC = () => {
       {stage !== 'start' && stage !== 'results' && (
         <div className="p-4 bg-indigo-100">
           <ProgressBar progress={progress} />
+          {/* Save status indicator */}
+          {isSaving && (
+            <div className="mt-2 flex items-center justify-center text-sm text-indigo-600">
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-indigo-600 border-t-transparent mr-2"></div>
+              Saving your progress...
+            </div>
+          )}
+          {saveError && (
+            <div className="mt-2 text-sm text-red-600 text-center bg-red-50 p-2 rounded">
+              {saveError}
+            </div>
+          )}
         </div>
       )}
       <div className="p-6 md:p-8">

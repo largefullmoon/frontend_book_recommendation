@@ -3,6 +3,7 @@ import { BookMarked, Send, RefreshCw, BookOpen, ExternalLink, Star, Calendar, Th
 import { useQuiz } from '../../context/QuizContext';
 import Button from '../common/Button';
 import axios from 'axios';
+import { api } from '../../services/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
@@ -48,6 +49,7 @@ const Results: React.FC = () => {
     bookSeries,
     parentEmail,
     parentPhone,
+    userId,
     resetQuiz
   } = useQuiz();
 
@@ -80,6 +82,7 @@ const Results: React.FC = () => {
       try {
         setIsLoading(true);
         const response = await axios.post<RecommendationResponse>(`${API_BASE_URL}/recommendation-plan`, {
+          userId,
           name,
           age,
           selectedGenres,
@@ -93,6 +96,21 @@ const Results: React.FC = () => {
         setCurrentRecommendations(response.data.current);
         setFutureReadingPlan(response.data.future);
         setSeriesRecommendations(response.data.recommendations);
+        
+        // Save recommendations to database
+        if (userId && response.data) {
+          try {
+            await api.saveRecommendations(userId, {
+              current: response.data.current,
+              future: response.data.future,
+              recommendations: response.data.recommendations
+            });
+          } catch (saveError) {
+            console.error('Failed to save recommendations:', saveError);
+            // Don't show error to user as recommendations are still displayed
+          }
+        }
+        
         setError(null);
       } catch (err) {
         setError('Failed to fetch recommendations. Please try again.');
@@ -103,7 +121,7 @@ const Results: React.FC = () => {
     };
 
     fetchRecommendations();
-  }, [name, age, selectedGenres, selectedInterests, nonFictionInterests, bookSeries]);
+  }, [name, age, selectedGenres, selectedInterests, nonFictionInterests, bookSeries, userId]);
 
   const handleEmailRecommendations = async () => {
     setIsSubmitting(true);
@@ -177,6 +195,19 @@ const Results: React.FC = () => {
     books: filterDislikedBooks(month.books)
   }));
 
+  // Check if we have any meaningful recommendations
+  const hasCurrentRecommendations = filteredCurrentRecommendations.length > 0;
+  const hasFutureRecommendations = filteredFutureReadingPlan.some(month => month.books.length > 0);
+  const hasSeriesRecommendations = seriesRecommendations.length > 0;
+  const hasAnyRecommendations = hasCurrentRecommendations || hasFutureRecommendations || hasSeriesRecommendations;
+
+  // Check if user had no positive book responses
+  const readBooks = bookSeries.filter(item => item.hasRead);
+  const positiveResponses = readBooks.filter(item => 
+    item.response === 'love' || item.response === 'like'
+  );
+  const hasPositiveBookResponses = positiveResponses.length > 0;
+
   return (
     <div className="animate-fadeIn">
       <div className="text-center mb-8">
@@ -187,49 +218,114 @@ const Results: React.FC = () => {
           Great job, {name}! 📚
         </h2>
         <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-          Based on your age ({age} years) and interests, we've curated a personalized reading journey just for you.
+          {hasAnyRecommendations 
+            ? `Based on your age (${age} years) and interests, we've curated a personalized reading journey just for you.`
+            : `Based on your age (${age} years) and interests, we're excited to introduce you to some amazing new books!`
+          }
         </p>
       </div>
+
+      {/* Show special message if no positive book responses */}
+      {!hasPositiveBookResponses && readBooks.length > 0 && (
+        <div className="bg-gradient-to-br from-yellow-50 to-orange-50 p-6 rounded-xl mb-8 border border-yellow-200 shadow-sm">
+          <div className="text-center">
+            <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+              <Star className="w-8 h-8 text-yellow-600" />
+            </div>
+            <h3 className="font-bold text-xl mb-3 text-yellow-800">
+              Discovering New Favorites! 🌟
+            </h3>
+            <p className="text-yellow-700 mb-4">
+              We noticed the books you've read weren't quite your style - that's totally normal! 
+              Everyone has different tastes, and that's what makes reading exciting. 
+            </p>
+            <p className="text-yellow-700">
+              We've carefully selected books based on your interests and preferences that we think you'll love. 
+              Sometimes the best books are the ones we haven't discovered yet!
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Show special message if no books were read */}
+      {readBooks.length === 0 && (
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl mb-8 border border-green-200 shadow-sm">
+          <div className="text-center">
+            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <BookOpen className="w-8 h-8 text-green-600" />
+            </div>
+            <h3 className="font-bold text-xl mb-3 text-green-800">
+              Your Reading Adventure Begins! 🚀
+            </h3>
+            <p className="text-green-700 mb-4">
+              How exciting - you're about to discover some amazing books! 
+              We've picked these recommendations based on your interests and what other readers your age love.
+            </p>
+            <p className="text-green-700">
+              Every great reader started somewhere, and we're here to help you find books that will spark your imagination!
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Current Recommendations */}
       <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-xl mb-8 border border-indigo-100 shadow-sm">
         <h3 className="font-bold text-xl mb-5 text-indigo-800 flex items-center">
           <Star className="w-6 h-6 mr-2 text-yellow-500" />
-          Top Picks for You
+          {hasCurrentRecommendations ? 'Top Picks for You' : 'Books We Think You\'ll Love'}
         </h3>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredCurrentRecommendations.map((book, index) => (
-            <div key={index} className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow relative group">
-              <button
-                onClick={() => handleDislikeBook(book)}
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded-full"
-                title="Remove this book"
-              >
-                <ThumbsDown className="w-4 h-4 text-red-500" />
-              </button>
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                    <BookMarked className="w-5 h-5 text-indigo-600" />
+        
+        {hasCurrentRecommendations ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredCurrentRecommendations.map((book, index) => (
+              <div key={index} className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow relative group">
+                <button
+                  onClick={() => handleDislikeBook(book)}
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded-full"
+                  title="Remove this book"
+                >
+                  <ThumbsDown className="w-4 h-4 text-red-500" />
+                </button>
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <BookMarked className="w-5 h-5 text-indigo-600" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {book.series && (
+                      <div className="mb-2">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                          <Library className="w-3 h-3 mr-1" />
+                          {book.series} Series
+                        </span>
+                      </div>
+                    )}
+                    <h4 className="font-semibold text-indigo-900 mb-1 line-clamp-2">{book.title}</h4>
+                    <p className="text-sm text-gray-600">{getDisplayName(book)}</p>
+                    <p className="text-sm text-gray-500 mt-2 line-clamp-3">{book.explanation}</p>
                   </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  {book.series && (
-                    <div className="mb-2">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                        <Library className="w-3 h-3 mr-1" />
-                        {book.series} Series
-                      </span>
-                    </div>
-                  )}
-                  <h4 className="font-semibold text-indigo-900 mb-1 line-clamp-2">{book.title}</h4>
-                  <p className="text-sm text-gray-600">{getDisplayName(book)}</p>
-                  <p className="text-sm text-gray-500 mt-2 line-clamp-3">{book.explanation}</p>
-                </div>
               </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+              <BookMarked className="w-8 h-8 text-indigo-600" />
             </div>
-          ))}
-        </div>
+            <h4 className="text-lg font-semibold text-indigo-800 mb-2">
+              Personalized Recommendations Coming Soon!
+            </h4>
+            <p className="text-indigo-600 mb-4">
+              We're working on finding the perfect books for you based on your unique preferences.
+            </p>
+            <p className="text-sm text-gray-600">
+              In the meantime, explore popular books for your age group or ask your librarian for recommendations 
+              in the genres you selected: <strong>{selectedGenres.join(', ')}</strong>
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Series/Author Recommendations */}
@@ -290,38 +386,96 @@ const Results: React.FC = () => {
           <Calendar className="w-6 h-6 mr-2 text-pink-600" />
           Your 3-Month Reading Journey
         </h3>
-        <div className="grid gap-4 md:grid-cols-3">
-          {filteredFutureReadingPlan.map((monthObj, index) => (
-            <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
-              <h4 className="font-semibold text-lg text-pink-700 mb-3">{monthObj.month}</h4>
-              <ul className="space-y-3">
-                {monthObj.books.map((book, bookIndex) => (
-                  <li key={bookIndex} className="border-l-2 border-pink-200 pl-3 relative group">
-                    <button
-                      onClick={() => handleDislikeBook(book)}
-                      className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded-full"
-                      title="Remove this book"
-                    >
-                      <X className="w-3 h-3 text-red-500" />
-                    </button>
-                    {book.series && (
-                      <div className="mb-1">
-                        <span className="text-xs font-medium text-indigo-800">{book.series} Series</span>
-                      </div>
-                    )}
-                    <div className="font-medium text-gray-900">{book.title}</div>
-                    <div className="text-sm text-gray-600">{getDisplayName(book)}</div>
-                    <div className="text-sm text-gray-500 mt-1 line-clamp-2">{book.explanation}</div>
-                  </li>
-                ))}
-                {monthObj.books.length === 0 && (
-                  <li className="text-gray-500 italic">More recommendations coming soon!</li>
-                )}
-              </ul>
+        
+        {hasFutureRecommendations ? (
+          <div className="grid gap-4 md:grid-cols-3">
+            {filteredFutureReadingPlan.map((monthObj, index) => (
+              <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
+                <h4 className="font-semibold text-lg text-pink-700 mb-3">{monthObj.month}</h4>
+                <ul className="space-y-3">
+                  {monthObj.books.map((book, bookIndex) => (
+                    <li key={bookIndex} className="border-l-2 border-pink-200 pl-3 relative group">
+                      <button
+                        onClick={() => handleDislikeBook(book)}
+                        className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded-full"
+                        title="Remove this book"
+                      >
+                        <X className="w-3 h-3 text-red-500" />
+                      </button>
+                      {book.series && (
+                        <div className="mb-1">
+                          <span className="text-xs font-medium text-indigo-800">{book.series} Series</span>
+                        </div>
+                      )}
+                      <div className="font-medium text-gray-900">{book.title}</div>
+                      <div className="text-sm text-gray-600">{getDisplayName(book)}</div>
+                      <div className="text-sm text-gray-500 mt-1 line-clamp-2">{book.explanation}</div>
+                    </li>
+                  ))}
+                  {monthObj.books.length === 0 && (
+                    <li className="text-gray-500 italic">More recommendations coming soon!</li>
+                  )}
+                </ul>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <div className="mx-auto w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mb-4">
+              <Calendar className="w-8 h-8 text-pink-600" />
             </div>
-          ))}
-        </div>
+            <h4 className="text-lg font-semibold text-pink-800 mb-2">
+              Your Reading Journey is Being Planned!
+            </h4>
+            <p className="text-pink-700 mb-4">
+              We're creating a personalized 3-month reading plan based on your preferences.
+            </p>
+            <p className="text-sm text-gray-600">
+              Consider starting with books from your favorite genres: <strong>{selectedGenres.join(', ')}</strong>
+              {selectedInterests.length > 0 && (
+                <span> and topics like: <strong>{selectedInterests.join(', ')}</strong></span>
+              )}
+            </p>
+          </div>
+        )}
       </div>
+
+      {/* Helpful Tips Section - only show when no recommendations */}
+      {!hasAnyRecommendations && (
+        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl mb-8 border border-blue-200 shadow-sm">
+          <h3 className="font-bold text-xl mb-5 text-blue-800 flex items-center">
+            <BookOpen className="w-6 h-6 mr-2 text-blue-600" />
+            How to Find Your Next Great Read
+          </h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <h4 className="font-semibold text-blue-800 mb-2">🏛️ Visit Your Library</h4>
+              <p className="text-sm text-gray-600">
+                Ask your librarian for recommendations in <strong>{selectedGenres.join(', ')}</strong>. 
+                They're experts at matching readers with perfect books!
+              </p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <h4 className="font-semibold text-blue-800 mb-2">👥 Ask Friends & Family</h4>
+              <p className="text-sm text-gray-600">
+                What are your friends reading? Sometimes the best recommendations come from people who know you well.
+              </p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <h4 className="font-semibold text-blue-800 mb-2">🏆 Try Award Winners</h4>
+              <p className="text-sm text-gray-600">
+                Look for books that have won awards for your age group - they're often crowd-pleasers!
+              </p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <h4 className="font-semibold text-blue-800 mb-2">📚 Explore Book Series</h4>
+              <p className="text-sm text-gray-600">
+                If you find one book you like, check if it's part of a series - you might love the whole collection!
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Share Options */}
       <div className="bg-white p-6 rounded-xl border border-gray-200 mb-8 shadow-sm">
