@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BookMarked, Send, RefreshCw, BookOpen, ExternalLink, Star, Calendar, ThumbsDown, X, Library } from 'lucide-react';
 import { useQuiz } from '../../context/QuizContext';
 import Button from '../common/Button';
@@ -50,7 +50,10 @@ const Results: React.FC = () => {
     parentEmail,
     parentPhone,
     userId,
-    resetQuiz
+    resetQuiz,
+    fictionGenres,
+    nonFictionGenres,
+    additionalGenres
   } = useQuiz();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,6 +64,25 @@ const Results: React.FC = () => {
   const [seriesRecommendations, setSeriesRecommendations] = useState<Recommendation[]>([]);
   const [dislikedBooks, setDislikedBooks] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Combine all genre data based on age
+  const allSelectedGenres = useMemo((): string[] => {
+    if (age === null) return [];
+    
+    // For young users (6-10), use selectedGenres from GenreYoung + additionalGenres
+    if (age >= 6 && age <= 10) {
+      return [...selectedGenres, ...additionalGenres];
+    }
+    
+    // For older users (11+), combine fictionGenres + nonFictionGenres + additionalGenres
+    if (age >= 11) {
+      return [...fictionGenres, ...nonFictionGenres, ...additionalGenres];
+    }
+    
+    // For very young users (5 and under), use selectedGenres (from interests)
+    return selectedGenres;
+  }, [age, selectedGenres, fictionGenres, nonFictionGenres, additionalGenres]);
 
   // Helper function to get display name (series or author)
   const getDisplayName = (book: Book | SampleBook) => {
@@ -77,51 +99,87 @@ const Results: React.FC = () => {
     setDislikedBooks(prev => new Set([...prev, bookKey]));
   };
 
-  useEffect(() => {
-    const fetchRecommendations = async () => {
-      try {
-        setIsLoading(true);
-        const response = await axios.post<RecommendationResponse>(`${API_BASE_URL}/recommendation-plan`, {
-          userId,
-          name,
+  const fetchRecommendations = async () => {
+    try {
+      // Validate that we have selected genres
+      if (allSelectedGenres.length === 0) {
+        console.error('No genres found:', {
           age,
           selectedGenres,
-          selectedInterests,
-          nonFictionInterests,
-          bookSeries,
-          parentEmail,
-          parentPhone
+          fictionGenres,
+          nonFictionGenres,
+          additionalGenres
         });
-        
-        setCurrentRecommendations(response.data.current);
-        setFutureReadingPlan(response.data.future);
-        setSeriesRecommendations(response.data.recommendations);
-        
-        // Save recommendations to database
-        if (userId && response.data) {
-          try {
-            await api.saveRecommendations(userId, {
-              current: response.data.current,
-              future: response.data.future,
-              recommendations: response.data.recommendations
-            });
-          } catch (saveError) {
-            console.error('Failed to save recommendations:', saveError);
-            // Don't show error to user as recommendations are still displayed
-          }
-        }
-        
-        setError(null);
-      } catch (err) {
-        setError('Failed to fetch recommendations. Please try again.');
-        console.error('Error fetching recommendations:', err);
-      } finally {
-        setIsLoading(false);
+        setError('No genres selected. Please go back and select your favorite genres.');
+        return;
       }
+
+      console.log('Sending recommendation request with genres:', allSelectedGenres);
+
+      const response = await axios.post<RecommendationResponse>(`${API_BASE_URL}/recommendation-plan`, {
+        userId,
+        name,
+        age,
+        selectedGenres: allSelectedGenres,
+        selectedInterests,
+        nonFictionInterests,
+        bookSeries,
+        parentEmail,
+        parentPhone
+      });
+      
+      setCurrentRecommendations(response.data.current);
+      setFutureReadingPlan(response.data.future);
+      setSeriesRecommendations(response.data.recommendations);
+      
+      // Save recommendations to database
+      if (userId && response.data) {
+        try {
+          await api.saveRecommendations(userId, {
+            current: response.data.current,
+            future: response.data.future,
+            recommendations: response.data.recommendations
+          });
+        } catch (saveError) {
+          console.error('Failed to save recommendations:', saveError);
+          // Don't show error to user as recommendations are still displayed
+        }
+      }
+      
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch recommendations. Please try again.');
+      console.error('Error fetching recommendations:', err);
+    }
+  };
+
+  const handleRefreshRecommendations = async () => {
+    setIsRefreshing(true);
+    setError(null);
+    // Clear disliked books when refreshing
+    setDislikedBooks(new Set());
+    
+    try {
+      await fetchRecommendations();
+      setSuccess('New recommendations loaded!');
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError('Failed to refresh recommendations. Please try again.');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    const loadRecommendations = async () => {
+      setIsLoading(true);
+      await fetchRecommendations();
+      setIsLoading(false);
     };
 
-    fetchRecommendations();
-  }, [name, age, selectedGenres, selectedInterests, nonFictionInterests, bookSeries, userId]);
+    loadRecommendations();
+      }, [name, age, allSelectedGenres, selectedInterests, nonFictionInterests, bookSeries, userId]);
 
   const handleEmailRecommendations = async () => {
     setIsSubmitting(true);
@@ -217,12 +275,24 @@ const Results: React.FC = () => {
         <h2 className="text-3xl font-bold text-indigo-800 mb-3">
           Great job, {name}! 📚
         </h2>
-        <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+        <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-4">
           {hasAnyRecommendations 
             ? `Based on your age (${age} years) and interests, we've curated a personalized reading journey just for you.`
             : `Based on your age (${age} years) and interests, we're excited to introduce you to some amazing new books!`
           }
         </p>
+        
+        {/* Refresh Button */}
+        <div className="flex justify-center">
+          <Button
+            onClick={handleRefreshRecommendations}
+            disabled={isRefreshing}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 flex items-center group"
+          >
+            <RefreshCw className={`w-5 h-5 mr-2 transition-transform duration-500 ${isRefreshing ? 'animate-spin' : 'group-hover:rotate-180'}`} />
+            {isRefreshing ? 'Getting New Recommendations...' : 'Get New Recommendations'}
+          </Button>
+        </div>
       </div>
 
       {/* Show special message if no positive book responses */}
@@ -431,7 +501,7 @@ const Results: React.FC = () => {
               We're creating a personalized 3-month reading plan based on your preferences.
             </p>
             <p className="text-sm text-gray-600">
-              Consider starting with books from your favorite genres: <strong>{selectedGenres.join(', ')}</strong>
+              Consider starting with books from your favorite genres: <strong>{allSelectedGenres.join(', ')}</strong>
               {selectedInterests.length > 0 && (
                 <span> and topics like: <strong>{selectedInterests.join(', ')}</strong></span>
               )}
@@ -451,7 +521,7 @@ const Results: React.FC = () => {
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <h4 className="font-semibold text-blue-800 mb-2">🏛️ Visit Your Library</h4>
               <p className="text-sm text-gray-600">
-                Ask your librarian for recommendations in <strong>{selectedGenres.join(', ')}</strong>. 
+                Ask your librarian for recommendations in <strong>{allSelectedGenres.join(', ')}</strong>. 
                 They're experts at matching readers with perfect books!
               </p>
             </div>

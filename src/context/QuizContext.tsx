@@ -299,6 +299,14 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         case 'results':
           // Complete quiz with all data
           if (userId) {
+            // Combine all genres based on age for final submission
+            let allGenres = [...selectedGenres];
+            if (age && age >= 11) {
+              allGenres = [...fictionGenres, ...nonFictionGenres, ...additionalGenres];
+            } else if (age && age >= 6 && age <= 10) {
+              allGenres = [...selectedGenres, ...additionalGenres];
+            }
+            
             await api.completeQuiz({
               userId,
               name,
@@ -306,7 +314,7 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               parentEmail,
               parentPhone,
               parentReading,
-              selectedGenres,
+              selectedGenres: allGenres,
               selectedInterests,
               nonFictionInterests,
               topThreeGenres,

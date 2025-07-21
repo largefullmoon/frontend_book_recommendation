@@ -84,7 +84,6 @@ const RecommendationManager: React.FC = () => {
     const book = books.find(b => b.id === bookId);
     if (book) {
       try {
-        setIsLoading(true);
         const updatedBooks = [...recommendations[selectedAgeGroup], book];
         await axios.put(`${API_BASE_URL}/recommendations/${selectedAgeGroup}`, updatedBooks);
         setRecommendations({
@@ -95,15 +94,12 @@ const RecommendationManager: React.FC = () => {
       } catch (err) {
         setError('Failed to add book to recommendations.');
         console.error('Error adding book:', err);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
 
   const handleRemoveBook = async (bookId: string) => {
     try {
-      setIsLoading(true);
       const updatedBooks = recommendations[selectedAgeGroup].filter(book => book.id !== bookId);
       await axios.put(`${API_BASE_URL}/recommendations/${selectedAgeGroup}`, updatedBooks);
       setRecommendations({
@@ -114,8 +110,6 @@ const RecommendationManager: React.FC = () => {
     } catch (err) {
       setError('Failed to remove book from recommendations.');
       console.error('Error removing book:', err);
-    } finally {
-      setIsLoading(false);
     }
   };
 
