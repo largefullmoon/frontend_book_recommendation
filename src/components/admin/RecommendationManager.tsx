@@ -5,9 +5,11 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 const AGE_GROUPS = [
-  { id: '4-7', label: 'Ages 4-7' },
-  { id: '8-10', label: 'Ages 8-10' },
-  { id: '11+', label: 'Ages 11+' },
+  { id: 'Below 5', label: 'Below 5' },
+  { id: '6-8', label: 'Ages 6-8' },
+  { id: '9-10', label: 'Ages 9-10' },
+  { id: '11-12', label: 'Ages 11-12' },
+  { id: '13+', label: 'Ages 13+' },
 ];
 
 interface Book {
@@ -30,9 +32,11 @@ interface Recommendations {
 const RecommendationManager: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendations>({
-    '4-7': [],
-    '8-10': [],
-    '11+': [],
+    'Below 5': [],
+    '6-8': [],
+    '9-10': [],
+    '11-12': [],
+    '13+': [],
   });
   const [selectedAgeGroup, setSelectedAgeGroup] = useState(AGE_GROUPS[0].id);
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,6 +77,27 @@ const RecommendationManager: React.FC = () => {
     fetchBooks();
     fetchRecommendations();
   }, []);
+
+  useEffect(() => {
+    const fetchGroupRecommendations = async () => {
+      setIsLoading(true);
+      try {
+        const response = await axios.get<Book[]>(`${API_BASE_URL}/recommendations/${selectedAgeGroup}`);
+        setRecommendations(prev => ({
+          ...prev,
+          [selectedAgeGroup]: response.data
+        }));
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch recommendations for this age group.');
+        console.error('Error fetching group recommendations:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGroupRecommendations();
+  }, [selectedAgeGroup]);
 
   const filteredBooks = books.filter(book =>
     (book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

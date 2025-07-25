@@ -551,14 +551,14 @@ const Results: React.FC = () => {
       <div className="bg-white p-6 rounded-xl border border-gray-200 mb-8 shadow-sm">
         <h3 className="font-semibold text-lg mb-4 text-gray-800">Save Your Reading Journey</h3>
         <div className="space-y-4">
-          <button
+          {/* <button
             onClick={handleEmailRecommendations}
             disabled={isSubmitting}
             className="w-full p-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group"
           >
             <Send className="w-5 h-5 mr-2 transition-transform group-hover:-translate-y-1" />
             Send to Email ({parentEmail})
-          </button>
+          </button> */}
 
           <button
             onClick={handleWhatsAppRecommendations}
