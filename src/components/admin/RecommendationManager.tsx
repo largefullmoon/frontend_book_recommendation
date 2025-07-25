@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
@@ -12,129 +12,87 @@ const AGE_GROUPS = [
   { id: '13+', label: 'Ages 13+' },
 ];
 
-interface Book {
+interface ManualBook {
   id: string;
   title: string;
   author: string;
-  description: string;
-  genres: string[];
-  ageRange: {
-    min: number;
-    max: number;
-  };
-  coverImage?: string;
-}
-
-interface Recommendations {
-  [key: string]: Book[];
+  description?: string;
 }
 
 const RecommendationManager: React.FC = () => {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [recommendations, setRecommendations] = useState<Recommendations>({
-    'Below 5': [],
-    '6-8': [],
-    '9-10': [],
-    '11-12': [],
-    '13+': [],
-  });
+  const [recommendations, setRecommendations] = useState<ManualBook[]>([]);
   const [selectedAgeGroup, setSelectedAgeGroup] = useState(AGE_GROUPS[0].id);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [form, setForm] = useState({
+    title: '',
+    author: '',
+    description: '',
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchBooks = async () => {
+  // Fetch recommendations for selected age group
+  const fetchRecommendations = async (ageGroup: string) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const response = await axios.get<Book[]>(`${API_BASE_URL}/books`);
-      setBooks(response.data);
-      console.log(response.data);
-      setError(null);
-    } catch (err) {
-      setError('Failed to fetch books. Please try again later.');
-      console.error('Error fetching books:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchRecommendations = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get<Recommendations>(`${API_BASE_URL}/recommendations`);
-      setRecommendations(response.data);
-      console.log(response.data);
+      const encodedAgeGroup = encodeURIComponent(ageGroup);
+      const response = await axios.get<ManualBook[]>(`${API_BASE_URL}/recommendations/${encodedAgeGroup}`);
+      setRecommendations(response.data || []);
       setError(null);
     } catch (err) {
       setError('Failed to fetch recommendations. Please try again later.');
-      console.error('Error fetching recommendations:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchBooks();
-    fetchRecommendations();
-  }, []);
-
-  useEffect(() => {
-    const fetchGroupRecommendations = async () => {
-      setIsLoading(true);
-      try {
-        const response = await axios.get<Book[]>(`${API_BASE_URL}/recommendations/${selectedAgeGroup}`);
-        setRecommendations(prev => ({
-          ...prev,
-          [selectedAgeGroup]: response.data
-        }));
-        setError(null);
-      } catch (err) {
-        setError('Failed to fetch recommendations for this age group.');
-        console.error('Error fetching group recommendations:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchGroupRecommendations();
+    fetchRecommendations(selectedAgeGroup);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAgeGroup]);
 
-  const filteredBooks = books.filter(book =>
-    (book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      book.author.toLowerCase().includes(searchTerm.toLowerCase())) && recommendations[selectedAgeGroup] &&
-    !recommendations[selectedAgeGroup].find(rec => rec.id === book.id)
-  );
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  const handleAddBook = async (bookId: string) => {
-    const book = books.find(b => b.id === bookId);
-    if (book) {
-      try {
-        const updatedBooks = [...recommendations[selectedAgeGroup], book];
-        await axios.put(`${API_BASE_URL}/recommendations/${selectedAgeGroup}`, updatedBooks);
-        setRecommendations({
-          ...recommendations,
-          [selectedAgeGroup]: updatedBooks
-        });
-        setError(null);
-      } catch (err) {
-        setError('Failed to add book to recommendations.');
-        console.error('Error adding book:', err);
-      }
+  const handleAddRecommendation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.title.trim() || !form.author.trim()) {
+      setError('Title and author are required.');
+      return;
+    }
+    const newBook: ManualBook = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+      title: form.title.trim(),
+      author: form.author.trim(),
+      description: form.description.trim(),
+    };
+    const updated = [...recommendations, newBook];
+    setIsLoading(true);
+    try {
+      const encodedAgeGroup = encodeURIComponent(selectedAgeGroup);
+      await axios.put(`${API_BASE_URL}/recommendations/${encodedAgeGroup}`, updated);
+      setRecommendations(updated);
+      setForm({ title: '', author: '', description: '' });
+      setError(null);
+    } catch (err) {
+      setError('Failed to add recommendation.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleRemoveBook = async (bookId: string) => {
+  const handleRemoveRecommendation = async (bookId: string) => {
+    const updated = recommendations.filter(book => book.id !== bookId);
+    setIsLoading(true);
     try {
-      const updatedBooks = recommendations[selectedAgeGroup].filter(book => book.id !== bookId);
-      await axios.put(`${API_BASE_URL}/recommendations/${selectedAgeGroup}`, updatedBooks);
-      setRecommendations({
-        ...recommendations,
-        [selectedAgeGroup]: updatedBooks
-      });
+      const encodedAgeGroup = encodeURIComponent(selectedAgeGroup);
+      await axios.put(`${API_BASE_URL}/recommendations/${encodedAgeGroup}`, updated);
+      setRecommendations(updated);
       setError(null);
     } catch (err) {
-      setError('Failed to remove book from recommendations.');
-      console.error('Error removing book:', err);
+      setError('Failed to remove recommendation.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -171,84 +129,96 @@ const RecommendationManager: React.FC = () => {
           </div>
         </div>
 
-        {/* Current Recommendations */}
+        {/* Recommendations for Selected Age Group */}
         <div className="col-span-2">
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">
-              Current Recommendations for {AGE_GROUPS.find(g => g.id === selectedAgeGroup)?.label}
+              Recommendations for {AGE_GROUPS.find(g => g.id === selectedAgeGroup)?.label}
             </h2>
 
-            <div className="mb-4 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search books to add..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                disabled={isLoading}
-              />
-            </div>
-
-            {isLoading ? (
-              <div className="flex justify-center items-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+            {/* Add Recommendation Form */}
+            <form onSubmit={handleAddRecommendation} className="mb-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Book Title<span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  name="title"
+                  value={form.title}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Enter book title"
+                  required
+                  disabled={isLoading}
+                />
               </div>
-            ) : (
-              <>
-                {/* Current Recommendations List */}
-                <div className="mb-6">
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Current Recommendations</h3>
-                  <div className="space-y-2">
-                    {recommendations[selectedAgeGroup] && recommendations[selectedAgeGroup].map(book => (
-                      <div
-                        key={book.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                      >
-                        <div>
-                          <h4 className="font-medium text-gray-900">{book.title}</h4>
-                          <p className="text-sm text-gray-500">{book.author}</p>
-                        </div>
-                        <button
-                          onClick={() => handleRemoveBook(book.id)}
-                          className="text-red-600 hover:text-red-800"
-                          disabled={isLoading}
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Author<span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  name="author"
+                  value={form.author}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Enter author name"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  name="description"
+                  value={form.description}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Enter description (optional)"
+                  rows={2}
+                  disabled={isLoading}
+                />
+              </div>
+              <button
+                type="submit"
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                disabled={isLoading}
+              >
+                <Plus className="w-5 h-5" /> Add Recommendation
+              </button>
+            </form>
 
-                {/* Available Books List */}
-                {searchTerm && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Available Books</h3>
-                    <div className="space-y-2">
-                      {filteredBooks.map(book => (
-                        <div
-                          key={book.id}
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                        >
-                          <div>
-                            <h4 className="font-medium text-gray-900">{book.title}</h4>
-                            <p className="text-sm text-gray-500">{book.author}</p>
-                          </div>
-                          <button
-                            onClick={() => handleAddBook(book.id)}
-                            className="text-green-600 hover:text-green-800"
-                            disabled={isLoading}
-                          >
-                            <Plus className="w-5 h-5" />
-                          </button>
-                        </div>
-                      ))}
+            {/* Current Recommendations List */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">Current Recommendations</h3>
+              <div className="space-y-2">
+                {recommendations.length === 0 && !isLoading && (
+                  <div className="text-gray-400 italic">No recommendations yet.</div>
+                )}
+                {recommendations.map(book => (
+                  <div
+                    key={book.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div>
+                      <h4 className="font-medium text-gray-900">{book.title}</h4>
+                      <p className="text-sm text-gray-500">{book.author}</p>
+                      {book.description && <p className="text-xs text-gray-400 mt-1">{book.description}</p>}
                     </div>
+                    <button
+                      onClick={() => handleRemoveRecommendation(book.id)}
+                      className="text-red-600 hover:text-red-800"
+                      disabled={isLoading}
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
                   </div>
                 )}
-              </>
-            )}
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

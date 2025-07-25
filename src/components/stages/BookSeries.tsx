@@ -11,9 +11,9 @@ interface Book {
   id: string;
   title: string;
   author: string;
-  description: string;
-  genres: string[];
-  ageRange: {
+  description?: string;
+  genres?: string[];
+  ageRange?: {
     min: number;
     max: number;
   };
@@ -31,29 +31,35 @@ const BookSeries: React.FC = () => {
 
   // Get age group based on user's age
   const getAgeGroup = () => {
-    if (age && age <= 7) return '4-7';
-    if (age && age <= 10) return '8-10';
-    return '11+';
+    if (age !== undefined && age !== null) {
+      if (age < 5) return 'Below 5';
+      if (age >= 5 && age <= 8) return '6-8';
+      if (age >= 9 && age <= 10) return '9-10';
+      if (age >= 11 && age <= 12) return '11-12';
+      if (age >= 13) return '13+';
+    }
+    return 'Below 5'; // fallback
   };
 
-  // Fetch recommended books from backend
+  // Fetch recommended books from backend for the user's age group
   useEffect(() => {
     const fetchRecommendedBooks = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
         const ageGroup = getAgeGroup();
-        const response = await axios.get<{ [key: string]: Book[] }>(`${API_BASE_URL}/recommendations`);
-        setRecommendedBooks(response.data[ageGroup] || []);
+        // Encode ageGroup for URL safety
+        const encodedAgeGroup = encodeURIComponent(ageGroup);
+        const response = await axios.get<Book[]>(`${API_BASE_URL}/recommendations/${encodedAgeGroup}`);
+        setRecommendedBooks(response.data || []);
         setError(null);
       } catch (err) {
         setError('Failed to load recommended books. Please try again.');
-        console.error('Error fetching recommended books:', err);
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchRecommendedBooks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [age]);
 
   const seriesPerPage = 4;
