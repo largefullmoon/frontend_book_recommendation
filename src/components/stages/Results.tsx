@@ -70,19 +70,44 @@ const Results: React.FC = () => {
   const allSelectedGenres = useMemo((): string[] => {
     if (age === null) return [];
     
+    let genres: string[] = [];
+    
     // For young users (6-10), use selectedGenres from GenreYoung + additionalGenres
     if (age >= 6 && age <= 10) {
-      return [...selectedGenres, ...additionalGenres];
+      genres = [...selectedGenres, ...additionalGenres];
     }
-    
     // For older users (11+), combine fictionGenres + nonFictionGenres + additionalGenres
-    if (age >= 11) {
-      return [...fictionGenres, ...nonFictionGenres, ...additionalGenres];
+    else if (age >= 11) {
+      genres = [...fictionGenres, ...nonFictionGenres, ...additionalGenres];
+    }
+    // For very young users (5 and under), use selectedGenres (from interests)
+    else {
+      genres = [...selectedGenres];
     }
     
-    // For very young users (5 and under), use selectedGenres (from interests)
-    return selectedGenres;
-  }, [age, selectedGenres, fictionGenres, nonFictionGenres, additionalGenres]);
+    // Filter out empty strings and duplicates
+    const filteredGenres = genres.filter(genre => genre && genre.trim() !== '');
+    const uniqueGenres = [...new Set(filteredGenres)];
+    
+    // Fallback: if no genres found but we have interests, use them as genres
+    if (uniqueGenres.length === 0 && (selectedInterests.length > 0 || nonFictionInterests.length > 0)) {
+      const interestGenres = [...selectedInterests, ...nonFictionInterests];
+      console.log('No genres found, using interests as genres:', interestGenres);
+      return interestGenres;
+    }
+    
+    console.log('Combined genres for age', age, ':', {
+      selectedGenres,
+      fictionGenres,
+      nonFictionGenres,
+      additionalGenres,
+      selectedInterests,
+      nonFictionInterests,
+      combined: uniqueGenres
+    });
+    
+    return uniqueGenres;
+  }, [age, selectedGenres, fictionGenres, nonFictionGenres, additionalGenres, selectedInterests, nonFictionInterests]);
 
   // Helper function to get display name (series or author)
   const getDisplayName = (book: Book | SampleBook) => {
@@ -101,22 +126,43 @@ const Results: React.FC = () => {
 
   const fetchRecommendations = async () => {
     try {
-      // Validate that we have selected genres
+      // Validate that we have selected genres or other relevant data
       if (allSelectedGenres.length === 0) {
         console.error('No genres found:', {
           age,
           selectedGenres,
           fictionGenres,
           nonFictionGenres,
-          additionalGenres
+          additionalGenres,
+          selectedInterests,
+          nonFictionInterests
         });
-        setError('No genres selected. Please go back and select your favorite genres.');
-        return;
+        
+        // Check if we have any other data that could be used for recommendations
+        const hasInterests = selectedInterests.length > 0 || nonFictionInterests.length > 0;
+        const hasBookSeries = bookSeries.length > 0;
+        
+        if (!hasInterests && !hasBookSeries) {
+          console.error('No genres or interests found:', {
+            age,
+            selectedGenres,
+            fictionGenres,
+            nonFictionGenres,
+            additionalGenres,
+            selectedInterests,
+            nonFictionInterests
+          });
+          setError('No genres or interests selected. Please go back and select your favorite genres or interests.');
+          return;
+        }
+        
+        // If we have interests but no genres, we can still try to get recommendations
+        console.log('No genres selected, but proceeding with interests and book series data');
       }
 
       console.log('Sending recommendation request with genres:', allSelectedGenres);
 
-      const response = await axios.post<RecommendationResponse>(`${API_BASE_URL}/recommendation-plan`, {
+      const requestData = {
         userId,
         name,
         age,
@@ -126,7 +172,11 @@ const Results: React.FC = () => {
         bookSeries,
         parentEmail,
         parentPhone
-      });
+      };
+
+      console.log('Full request data:', requestData);
+
+      const response = await axios.post<RecommendationResponse>(`${API_BASE_URL}/recommendation-plan`, requestData);
       
       setCurrentRecommendations(response.data.current);
       setFutureReadingPlan(response.data.future);

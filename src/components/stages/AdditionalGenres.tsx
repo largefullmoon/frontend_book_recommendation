@@ -7,31 +7,31 @@ const AdditionalGenres: React.FC = () => {
   const { nextStage, prevStage, fictionGenres, nonFictionGenres, setAdditionalGenres } = useQuiz();
   const [selectedAdditional, setSelectedAdditional] = useState<string[]>([]);
 
-  // Define all genres (same as in TopThreeGenres)
+  // Define all genres with emoji icons
   const ALL_GENRES = [
-    'Adventure',
-    'Fantasy',
-    'Mystery',
-    'Science Fiction',
-    'Historical Fiction',
-    'Contemporary Fiction',
-    'Horror',
-    'Romance',
-    'Thriller',
-    'Comedy',
-    'Drama',
-    'Poetry',
-    'Biography',
-    'Science',
-    'History',
-    'Arts & Music',
-    'Sports',
-    'Technology'
+    { name: 'Adventure', icon: '🗺️' },
+    { name: 'Fantasy', icon: '✨' },
+    { name: 'Mystery', icon: '🔍' },
+    { name: 'Science Fiction', icon: '🚀' },
+    { name: 'Historical Fiction', icon: '⏰' },
+    { name: 'Contemporary Fiction', icon: '💝' },
+    { name: 'Horror', icon: '👻' },
+    { name: 'Romance', icon: '💕' },
+    { name: 'Thriller', icon: '⚡' },
+    { name: 'Comedy', icon: '😄' },
+    { name: 'Drama', icon: '🎭' },
+    { name: 'Poetry', icon: '📝' },
+    { name: 'Biography', icon: '👤' },
+    { name: 'Science', icon: '🔬' },
+    { name: 'History', icon: '🏛️' },
+    { name: 'Arts & Music', icon: '🎨' },
+    { name: 'Sports', icon: '⚽' },
+    { name: 'Technology', icon: '💻' }
   ];
 
   // Filter out the genres that were already selected in fiction and non-fiction stages
   const selectedGenres = [...fictionGenres, ...nonFictionGenres];
-  const remainingGenres = ALL_GENRES.filter(genre => !selectedGenres.includes(genre));
+  const remainingGenres = ALL_GENRES.filter(genre => !selectedGenres.includes(genre.name));
 
   const toggleGenre = (genre: string) => {
     setSelectedAdditional(prev => 
@@ -63,17 +63,18 @@ const AdditionalGenres: React.FC = () => {
       <div className="grid grid-cols-2 gap-4">
         {remainingGenres.map((genre) => (
           <Card
-            key={genre}
-            selected={selectedAdditional.includes(genre)}
+            key={genre.name}
+            selected={selectedAdditional.includes(genre.name)}
             selectable
-            onClick={() => toggleGenre(genre)}
+            onClick={() => toggleGenre(genre.name)}
             className="flex items-center p-4"
           >
+            <span className="text-2xl mr-3">{genre.icon}</span>
             <div className="flex-1">
-              <p className="text-md font-medium">{genre}</p>
+              <p className="text-md font-medium">{genre.name}</p>
             </div>
             
-            {selectedAdditional.includes(genre) && (
+            {selectedAdditional.includes(genre.name) && (
               <div className="h-6 w-6 rounded-full bg-indigo-100 flex items-center justify-center">
                 <div className="h-4 w-4 rounded-full bg-indigo-600"></div>
               </div>

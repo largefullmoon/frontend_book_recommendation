@@ -28,13 +28,31 @@ const youngGenres = [
 ];
 
 const AdditionalGenresYoung: React.FC = () => {
-  const { selectedGenres, setSelectedGenres, nextStage, prevStage } = useQuiz();
+  const { selectedGenres, additionalGenres, setAdditionalGenres, nextStage, prevStage } = useQuiz();
+
+  // Map the selected genre IDs to display names for filtering
+  const genreIdToDisplayName: Record<string, string> = {
+    'graphic-novels': 'Picture Books',
+    'humor': 'Funny Stories',
+    'adventure': 'Adventure Stories',
+    'spooky': 'Mystery',
+    'fantasy': 'Fantasy',
+    'fairy-tales': 'Fairy Tales',
+    'sci-fi': 'Science Fiction',
+    'superhero': 'Adventure Stories', // No direct superhero category in additional, using adventure
+    'puzzles': 'Animal Stories', // No direct puzzles category, using animal stories
+    'non-fiction': 'Friendship Stories' // No direct non-fiction category, using friendship stories
+  };
+
+  // Filter out genres that were already selected in the first stage
+  const selectedDisplayNames = selectedGenres.map(id => genreIdToDisplayName[id]).filter(Boolean);
+  const remainingGenres = youngGenres.filter(genre => !selectedDisplayNames.includes(genre.name));
 
   const handleGenreClick = (genreName: string) => {
-    if (selectedGenres.includes(genreName)) {
-      setSelectedGenres(selectedGenres.filter(g => g !== genreName));
+    if (additionalGenres.includes(genreName)) {
+      setAdditionalGenres(additionalGenres.filter(g => g !== genreName));
     } else {
-      setSelectedGenres([...selectedGenres, genreName]);
+      setAdditionalGenres([...additionalGenres, genreName]);
     }
   };
 
@@ -44,31 +62,32 @@ const AdditionalGenresYoung: React.FC = () => {
         What other types of books do you like?
       </h1>
       <p className="text-xl text-center mb-8">
-        Pick any other types of books you enjoy reading!
+        From the remaining types, pick any others you enjoy reading!
       </p>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mb-8">
-        {youngGenres.map((genre) => (
+        {remainingGenres.map((genre) => (
           <Card
             key={genre.name}
             onClick={() => handleGenreClick(genre.name)}
-            selected={selectedGenres.includes(genre.name)}
-            className="p-6 cursor-pointer text-center hover:bg-blue-50 transition-colors flex flex-col items-center justify-center min-h-[120px]"
+            selected={additionalGenres.includes(genre.name)}
+            className="flex flex-col items-center p-4 hover:shadow-md transition-shadow duration-200 text-center"
           >
-            <img
-              src={genre.img}
-              alt={genre.name}
-              style={{
-                width: 96,
-                height: 96,
-                filter: selectedGenres.includes(genre.name)
-                  ? 'drop-shadow(0 0 6px #2196f3)'
-                  : 'none',
-                marginBottom: 12,
-                objectFit: 'contain',
-              }}
-            />
-            <span className="text-lg font-medium">{genre.name}</span>
+            <div className={`mb-3 p-5 rounded-lg bg-gray-50 ${additionalGenres.includes(genre.name) ? 'bg-pink-50' : ''}`}>
+              <img
+                src={genre.img}
+                alt={genre.name}
+                className="w-48 h-48 object-contain"
+              />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium leading-tight">{genre.name}</p>
+            </div>
+            {additionalGenres.includes(genre.name) && (
+              <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-pink-100 flex items-center justify-center">
+                <div className="h-3 w-3 rounded-full bg-pink-600"></div>
+              </div>
+            )}
           </Card>
         ))}
       </div>

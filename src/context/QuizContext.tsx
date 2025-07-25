@@ -11,6 +11,7 @@ type QuizStage =
   | 'genreNonFiction' 
   | 'youngInterests'
   | 'fictionGenres'
+  | 'fictionGenresAdditional'
   | 'nonFictionGenres'
   | 'additionalGenres'
   | 'additionalGenresYoung'
@@ -213,7 +214,8 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       'genreYoung': 'additionalGenresYoung',
       'genreNonFiction': 'bookSeries',
       'youngInterests': 'bookSeries',
-      'fictionGenres': 'nonFictionGenres',
+      'fictionGenres': 'fictionGenresAdditional',
+      'fictionGenresAdditional': 'nonFictionGenres',
       'nonFictionGenres': 'additionalGenres',
       'additionalGenres': 'fictionNonFictionRatio',
       'additionalGenresYoung': 'bookSeries',
@@ -264,6 +266,10 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (userId && fictionGenres.length > 0) {
             await api.updateGenrePreferences(userId, { fictionGenres });
           }
+          break;
+
+        case 'fictionGenresAdditional':
+          // The fictionGenres are already updated in the component
           break;
 
         case 'nonFictionGenres':
@@ -358,7 +364,8 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       'age': 'name',
       'parentReading': 'age',
       'fictionGenres': age && age <= 7 ? 'parentReading' : 'age',
-      'nonFictionGenres': 'fictionGenres',
+      'fictionGenresAdditional': 'fictionGenres',
+      'nonFictionGenres': 'fictionGenresAdditional',
       'fictionNonFictionRatio': 'additionalGenres',
       'additionalGenres': 'nonFictionGenres',
       'additionalGenresYoung': 'genreYoung',

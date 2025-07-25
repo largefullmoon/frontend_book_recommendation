@@ -9,6 +9,7 @@ import ParentReading from './stages/ParentReading';
 import GenreYoung from './stages/GenreYoung';
 import TopThreeGenres from './stages/TopThreeGenres';
 import FictionGenres from './stages/FictionGenres';
+import FictionGenresAdditional from './stages/FictionGenresAdditional';
 import NonFictionGenres from './stages/NonFictionGenres';
 import AdditionalGenres from './stages/AdditionalGenres';
 import AdditionalGenresYoung from './stages/AdditionalGenresYoung';
@@ -37,6 +38,8 @@ const QuizContainer: React.FC = () => {
         return <GenreYoung />;
       case 'fictionGenres':
         return <FictionGenres />;
+      case 'fictionGenresAdditional':
+        return <FictionGenresAdditional />;
       case 'nonFictionGenres':
         return <NonFictionGenres />;
       case 'additionalGenres':
@@ -59,7 +62,7 @@ const QuizContainer: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto my-8 bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-500 ease-in-out">
+    <div className="max-w-4xl mx-auto my-8 bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-500 ease-in-out">
       {stage !== 'start' && stage !== 'results' && (
         <div className="p-4 bg-indigo-100">
           <ProgressBar progress={progress} />

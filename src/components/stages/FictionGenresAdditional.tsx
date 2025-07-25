@@ -15,51 +15,51 @@ const FICTION_GENRES = [
   { name: 'Drama', icon: '🎭' }
 ];
 
-const FictionGenres: React.FC = () => {
-  const { setFictionGenres, nextStage, prevStage } = useQuiz();
+const FictionGenresAdditional: React.FC = () => {
+  const { fictionGenres, setFictionGenres, nextStage, prevStage } = useQuiz();
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [error, setError] = useState('');
+
+  // Filter out the genres that were already selected in the first fiction stage
+  const remainingGenres = FICTION_GENRES.filter(genre => !fictionGenres.includes(genre.name));
 
   const toggleGenre = (genre: string) => {
     if (selectedGenres.includes(genre)) {
       setSelectedGenres(selectedGenres.filter(g => g !== genre));
-    } else if (selectedGenres.length < 3) {
+    } else {
       setSelectedGenres([...selectedGenres, genre]);
     }
   };
 
   const handleContinue = () => {
-    if (selectedGenres.length === 0) {
-      setError('Please select at least 1 fiction genre');
-      return;
-    }
-    if (selectedGenres.length > 3) {
-      setError('Please select no more than 3 fiction genres');
-      return;
-    }
-    setFictionGenres(selectedGenres);
+    // Combine the top 3 from first stage with additional selections
+    const allFictionGenres = [...fictionGenres, ...selectedGenres];
+    setFictionGenres(allFictionGenres);
     nextStage();
   };
 
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-indigo-800 mb-4">Select Your Favorite Fiction Genres</h2>
-        <p className="text-gray-600">Choose up to 3 fiction genres you enjoy reading the most.</p>
-        <p className="text-sm text-gray-500 mt-2">Selected: {selectedGenres.length}/3</p>
+        <h2 className="text-2xl font-bold text-indigo-800 mb-4">Any Other Fiction Genres You Like?</h2>
+        <p className="text-gray-600">
+          From the remaining fiction genres, select any others you'd enjoy reading.
+          {selectedGenres.length > 0 && (
+            <span className="block mt-2 text-sm text-indigo-600">
+              You've selected {selectedGenres.length} additional genre{selectedGenres.length !== 1 ? 's' : ''}.
+            </span>
+          )}
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {FICTION_GENRES.map((genre) => (
+        {remainingGenres.map((genre) => (
           <button
             key={genre.name}
             onClick={() => toggleGenre(genre.name)}
-            disabled={!selectedGenres.includes(genre.name) && selectedGenres.length >= 3}
             className={`p-4 rounded-lg text-left transition-all flex items-center space-x-3 ${
               selectedGenres.includes(genre.name)
                 ? 'brand-blue-bg text-white'
-                : selectedGenres.length >= 3
-                ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
                 : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
@@ -96,4 +96,4 @@ const FictionGenres: React.FC = () => {
   );
 };
 
-export default FictionGenres; 
+export default FictionGenresAdditional; 
