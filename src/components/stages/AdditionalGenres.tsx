@@ -29,9 +29,9 @@ const AdditionalGenres: React.FC = () => {
     { name: 'Technology', icon: '💻' }
   ];
 
-  // Filter out the genres that were already selected in fiction and non-fiction stages
-  const selectedGenres = [...fictionGenres, ...nonFictionGenres];
-  const remainingGenres = ALL_GENRES.filter(genre => !selectedGenres.includes(genre.name));
+  // Filter out ALL genres that were already selected in fiction, additional fiction, and non-fiction stages
+  const allSelectedGenres = [...fictionGenres, ...nonFictionGenres];
+  const remainingGenres = ALL_GENRES.filter(genre => !allSelectedGenres.includes(genre.name));
 
   const toggleGenre = (genre: string) => {
     setSelectedAdditional(prev => 
@@ -60,28 +60,35 @@ const AdditionalGenres: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        {remainingGenres.map((genre) => (
-          <Card
-            key={genre.name}
-            selected={selectedAdditional.includes(genre.name)}
-            selectable
-            onClick={() => toggleGenre(genre.name)}
-            className="flex items-center p-4"
-          >
-            <span className="text-2xl mr-3">{genre.icon}</span>
-            <div className="flex-1">
-              <p className="text-md font-medium">{genre.name}</p>
-            </div>
-            
-            {selectedAdditional.includes(genre.name) && (
-              <div className="h-6 w-6 rounded-full bg-indigo-100 flex items-center justify-center">
-                <div className="h-4 w-4 rounded-full bg-indigo-600"></div>
+      {remainingGenres.length > 0 ? (
+        <div className="grid grid-cols-2 gap-4">
+          {remainingGenres.map((genre) => (
+            <Card
+              key={genre.name}
+              selected={selectedAdditional.includes(genre.name)}
+              selectable
+              onClick={() => toggleGenre(genre.name)}
+              className="flex items-center p-4"
+            >
+              <span className="text-2xl mr-3">{genre.icon}</span>
+              <div className="flex-1">
+                <p className="text-md font-medium">{genre.name}</p>
               </div>
-            )}
-          </Card>
-        ))}
-      </div>
+              
+              {selectedAdditional.includes(genre.name) && (
+                <div className="h-6 w-6 rounded-full bg-indigo-100 flex items-center justify-center">
+                  <div className="h-4 w-4 rounded-full bg-indigo-600"></div>
+                </div>
+              )}
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-8">
+          <p className="text-gray-500 text-lg">You've already selected all available genres!</p>
+          <p className="text-gray-400 text-sm mt-2">Great job exploring different reading preferences!</p>
+        </div>
+      )}
 
       <div className="flex justify-between pt-4">
         <Button 
