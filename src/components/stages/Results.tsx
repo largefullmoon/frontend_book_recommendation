@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { BookMarked, Send, RefreshCw, BookOpen, ExternalLink, Star, Calendar, ThumbsDown, X, Library } from 'lucide-react';
 import { useQuiz } from '../../context/QuizContext';
 import Button from '../common/Button';
 import axios from 'axios';
 import { api } from '../../services/api';
-
+import Loading from '../../assets/loading.gif'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 interface Book {
@@ -65,6 +65,18 @@ const Results: React.FC = () => {
   const [dislikedBooks, setDislikedBooks] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const hasInitialized = useRef(false);
+
+  const loadingMessages = [
+    "Bookie's on a mission to find your next adventure!",
+    "Sniff-sniff! Bookie smells an epic story nearby!",
+    "Bookie's story-radar is beeping! Something awesome is close!",
+    "Just a page-flip away! Bookie's almost ready with a book you'll love!",
+    "Don't blink! Your next favorite book is about to appear!",
+    "Bookie's flipping pages faster than ever! Hang tight!",
+    "Your wait is 99% complete! Bookie will show it any second now!"
+  ];
 
   // Combine all genre data based on age
   const allSelectedGenres = useMemo((): string[] => {
@@ -221,15 +233,40 @@ const Results: React.FC = () => {
     }
   };
 
+  // Effect to cycle through loading messages (only once)
+  useEffect(() => {
+    if (isLoading) {
+      const interval = setInterval(() => {
+        setLoadingMessageIndex((prevIndex) => {
+          const nextIndex = prevIndex + 1;
+          
+          // If we've shown all messages, stay on the last one
+          if (nextIndex >= loadingMessages.length) {
+            return loadingMessages.length - 1; // Stay on final message
+          }
+          
+          return nextIndex;
+        });
+      }, 1500); // Change message every 1.5 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [isLoading, loadingMessages.length]);
+
   useEffect(() => {
     const loadRecommendations = async () => {
       setIsLoading(true);
+      setLoadingMessageIndex(0); // Reset to first message
       await fetchRecommendations();
-      setIsLoading(false);
+      setIsLoading(false); // Stop loading when API call completes
     };
 
-    loadRecommendations();
-      }, [name, age, allSelectedGenres, selectedInterests, nonFictionInterests, bookSeries, userId]);
+    // Only load recommendations once on initial mount
+    if (!hasInitialized.current) {
+      hasInitialized.current = true;
+      loadRecommendations();
+    }
+  }, []); // Empty dependency array - only run once on mount
 
   const handleEmailRecommendations = async () => {
     setIsSubmitting(true);
@@ -273,9 +310,36 @@ const Results: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
-        <p className="text-indigo-600 font-medium">Finding the perfect books for you...</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6">
+        <div className="relative">
+          <img 
+            src={Loading} 
+            alt="Bookie loading" 
+            className="w-32 h-32 mx-auto"
+          />
+        </div>
+        <div className="text-center space-y-4">
+          <div className="min-h-[80px] flex items-center justify-center">
+            <p className="text-indigo-600 font-medium text-lg transition-all duration-700 ease-in-out animate-fadeIn max-w-md">
+              {loadingMessages[loadingMessageIndex]}
+            </p>
+          </div>
+          <div className="flex justify-center space-x-1">
+            {loadingMessages.map((_, index) => (
+              <div
+                key={index}
+                className={`w-3 h-3 rounded-full transition-all duration-500 ${
+                  index === loadingMessageIndex 
+                    ? 'bg-indigo-500 scale-125' 
+                    : 'bg-indigo-200'
+                }`}
+              />
+            ))}
+          </div>
+          <p className="text-sm text-gray-500 mt-2">
+            {loadingMessageIndex + 1} of {loadingMessages.length} • Next: {loadingMessages[(loadingMessageIndex + 1) % loadingMessages.length].substring(0, 30)}...
+          </p>
+        </div>
       </div>
     );
   }
@@ -333,7 +397,7 @@ const Results: React.FC = () => {
         </p>
         
         {/* Refresh Button */}
-        <div className="flex justify-center">
+        {/* <div className="flex justify-center">
           <Button
             onClick={handleRefreshRecommendations}
             disabled={isRefreshing}
@@ -342,7 +406,7 @@ const Results: React.FC = () => {
             <RefreshCw className={`w-5 h-5 mr-2 transition-transform duration-500 ${isRefreshing ? 'animate-spin' : 'group-hover:rotate-180'}`} />
             {isRefreshing ? 'Getting New Recommendations...' : 'Get New Recommendations'}
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* Show special message if no positive book responses */}
