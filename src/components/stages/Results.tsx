@@ -12,13 +12,13 @@ interface Book {
   author: string;
   series?: string;
   explanation: string;
+  justbookify_link?: string;
 }
 
 interface FutureMonth {
   month: string;
   books: Book[];
 }
-
 interface SampleBook {
   title: string;
   author: string;
@@ -310,17 +310,17 @@ const Results: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6">
+      <div className="flex flex-col items-center justify-center min-h-[300px] space-y-4 px-4 sm:min-h-[400px] sm:space-y-6 sm:px-0">
         <div className="relative">
           <img 
             src={Loading} 
             alt="Bookie loading" 
-            className="w-32 h-32 mx-auto"
+            className="w-24 h-24 mx-auto sm:w-32 sm:h-32"
           />
         </div>
-        <div className="text-center space-y-4">
-          <div className="min-h-[80px] flex items-center justify-center">
-            <p className="text-indigo-600 font-medium text-lg transition-all duration-700 ease-in-out animate-fadeIn max-w-md">
+        <div className="space-y-3 text-center sm:space-y-4">
+          <div className="min-h-[60px] flex items-center justify-center sm:min-h-[80px]">
+            <p className="max-w-sm text-base font-medium text-indigo-600 transition-all duration-700 ease-in-out animate-fadeIn sm:max-w-md sm:text-lg">
               {loadingMessages[loadingMessageIndex]}
             </p>
           </div>
@@ -328,7 +328,7 @@ const Results: React.FC = () => {
             {loadingMessages.map((_, index) => (
               <div
                 key={index}
-                className={`w-3 h-3 rounded-full transition-all duration-500 ${
+                className={`w-2 h-2 rounded-full transition-all duration-500 sm:w-3 sm:h-3 ${
                   index === loadingMessageIndex 
                     ? 'bg-indigo-500 scale-125' 
                     : 'bg-indigo-200'
@@ -336,7 +336,7 @@ const Results: React.FC = () => {
               />
             ))}
           </div>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="mt-2 text-xs text-gray-500 sm:text-sm">
             {loadingMessageIndex + 1} of {loadingMessages.length} • Next: {loadingMessages[(loadingMessageIndex + 1) % loadingMessages.length].substring(0, 30)}...
           </p>
         </div>
@@ -346,14 +346,14 @@ const Results: React.FC = () => {
 
   if (error) {
     return (
-      <div className="text-center p-8 bg-red-50 rounded-lg">
+      <div className="p-4 text-center rounded-lg bg-red-50 mx-4 sm:mx-0 sm:p-8">
         <div className="mb-4 text-red-600">
-          <svg className="w-12 h-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-8 h-8 mx-auto mb-3 sm:w-12 sm:h-12 sm:mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p className="text-lg font-medium">{error}</p>
+          <p className="text-base font-medium sm:text-lg">{error}</p>
         </div>
-        <Button onClick={() => window.location.reload()} className="bg-red-600 hover:bg-red-700 text-white">
+        <Button onClick={() => window.location.reload()} className="text-white bg-red-600 hover:bg-red-700 text-sm sm:text-base">
           Try Again
         </Button>
       </div>
@@ -381,15 +381,15 @@ const Results: React.FC = () => {
   const hasPositiveBookResponses = positiveResponses.length > 0;
 
   return (
-    <div className="animate-fadeIn">
-      <div className="text-center mb-8">
-        <div className="mx-auto w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center mb-4 shadow-lg">
-          <BookMarked className="w-10 h-10 text-white" />
+    <div className="animate-fadeIn max-w-full overflow-hidden">
+      <div className="mb-6 px-4 text-center sm:mb-8 sm:px-0">
+        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full shadow-lg bg-gradient-to-br from-indigo-400 to-purple-500 sm:w-20 sm:h-20">
+          <BookMarked className="w-8 h-8 text-white sm:w-10 sm:h-10" />
         </div>
-        <h2 className="text-3xl font-bold text-indigo-800 mb-3">
+        <h2 className="mb-3 text-2xl font-bold text-indigo-800 sm:text-3xl">
           Great job, {name}! 📚
         </h2>
-        <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-4">
+        <p className="max-w-2xl mx-auto mb-4 px-2 text-base text-gray-600 sm:text-lg sm:px-0">
           {hasAnyRecommendations 
             ? `Based on your age (${age} years) and interests, we've curated a personalized reading journey just for you.`
             : `Based on your age (${age} years) and interests, we're excited to introduce you to some amazing new books!`
@@ -401,7 +401,7 @@ const Results: React.FC = () => {
           <Button
             onClick={handleRefreshRecommendations}
             disabled={isRefreshing}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 flex items-center group"
+            className="flex items-center px-6 py-2 text-white bg-indigo-600 hover:bg-indigo-700 group"
           >
             <RefreshCw className={`w-5 h-5 mr-2 transition-transform duration-500 ${isRefreshing ? 'animate-spin' : 'group-hover:rotate-180'}`} />
             {isRefreshing ? 'Getting New Recommendations...' : 'Get New Recommendations'}
@@ -411,19 +411,19 @@ const Results: React.FC = () => {
 
       {/* Show special message if no positive book responses */}
       {!hasPositiveBookResponses && readBooks.length > 0 && (
-        <div className="bg-gradient-to-br from-yellow-50 to-orange-50 p-6 rounded-xl mb-8 border border-yellow-200 shadow-sm">
+        <div className="p-4 mb-6 border border-yellow-200 shadow-sm bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl mx-4 sm:mx-0 sm:p-6 sm:mb-8">
           <div className="text-center">
-            <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
-              <Star className="w-8 h-8 text-yellow-600" />
+            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-yellow-100 rounded-full sm:w-16 sm:h-16">
+              <Star className="w-6 h-6 text-yellow-600 sm:w-8 sm:h-8" />
             </div>
-            <h3 className="font-bold text-xl mb-3 text-yellow-800">
+            <h3 className="mb-3 text-lg font-bold text-yellow-800 sm:text-xl">
               Discovering New Favorites! 🌟
             </h3>
-            <p className="text-yellow-700 mb-4">
+            <p className="mb-4 text-sm text-yellow-700 sm:text-base">
               We noticed the books you've read weren't quite your style - that's totally normal! 
               Everyone has different tastes, and that's what makes reading exciting. 
             </p>
-            <p className="text-yellow-700">
+            <p className="text-sm text-yellow-700 sm:text-base">
               We've carefully selected books based on your interests and preferences that we think you'll love. 
               Sometimes the best books are the ones we haven't discovered yet!
             </p>
@@ -433,19 +433,19 @@ const Results: React.FC = () => {
 
       {/* Show special message if no books were read */}
       {readBooks.length === 0 && (
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl mb-8 border border-green-200 shadow-sm">
+        <div className="p-4 mb-6 border border-green-200 shadow-sm bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl mx-4 sm:mx-0 sm:p-6 sm:mb-8">
           <div className="text-center">
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <BookOpen className="w-8 h-8 text-green-600" />
+            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-green-100 rounded-full sm:w-16 sm:h-16">
+              <BookOpen className="w-6 h-6 text-green-600 sm:w-8 sm:h-8" />
             </div>
-            <h3 className="font-bold text-xl mb-3 text-green-800">
+            <h3 className="mb-3 text-lg font-bold text-green-800 sm:text-xl">
               Your Reading Adventure Begins! 🚀
             </h3>
-            <p className="text-green-700 mb-4">
+            <p className="mb-4 text-sm text-green-700 sm:text-base">
               How exciting - you're about to discover some amazing books! 
               We've picked these recommendations based on your interests and what other readers your age love.
             </p>
-            <p className="text-green-700">
+            <p className="text-sm text-green-700 sm:text-base">
               Every great reader started somewhere, and we're here to help you find books that will spark your imagination!
             </p>
           </div>
@@ -453,60 +453,71 @@ const Results: React.FC = () => {
       )}
 
       {/* Current Recommendations */}
-      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-xl mb-8 border border-indigo-100 shadow-sm">
-        <h3 className="font-bold text-xl mb-5 text-indigo-800 flex items-center">
-          <Star className="w-6 h-6 mr-2 text-yellow-500" />
+      <div className="p-4 mb-6 border border-indigo-100 shadow-sm bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl mx-4 sm:mx-0 sm:p-6 sm:mb-8">
+        <h3 className="flex items-center mb-4 text-lg font-bold text-indigo-800 sm:mb-5 sm:text-xl">
+          <Star className="w-5 h-5 mr-2 text-yellow-500 sm:w-6 sm:h-6" />
           {hasCurrentRecommendations ? 'Top Picks for You' : 'Books We Think You\'ll Love'}
         </h3>
         
         {hasCurrentRecommendations ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredCurrentRecommendations.map((book, index) => (
-              <div key={index} className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow relative group">
+              <div key={index} className="relative p-3 transition-shadow bg-white rounded-lg shadow-sm hover:shadow-md group sm:p-4">
                 <button
                   onClick={() => handleDislikeBook(book)}
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded-full"
+                  className="absolute p-1 transition-opacity rounded-full opacity-0 top-2 right-2 group-hover:opacity-100 hover:bg-red-50 z-10"
                   title="Remove this book"
                 >
-                  <ThumbsDown className="w-4 h-4 text-red-500" />
+                  <ThumbsDown className="w-3 h-3 text-red-500 sm:w-4 sm:h-4" />
                 </button>
-                <div className="flex items-start space-x-3">
+                <div className="flex items-start space-x-2 sm:space-x-3">
                   <div className="flex-shrink-0">
-                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                      <BookMarked className="w-5 h-5 text-indigo-600" />
+                    <div className="flex items-center justify-center w-8 h-8 bg-indigo-100 rounded-full sm:w-10 sm:h-10">
+                      <BookMarked className="w-4 h-4 text-indigo-600 sm:w-5 sm:h-5" />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     {book.series && (
                       <div className="mb-2">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                           <Library className="w-3 h-3 mr-1" />
-                          {book.series} Series
+                          <span className="truncate">{book.series} Series</span>
                         </span>
                       </div>
                     )}
-                    <h4 className="font-semibold text-indigo-900 mb-1 line-clamp-2">{book.title}</h4>
-                    <p className="text-sm text-gray-600">{getDisplayName(book)}</p>
-                    <p className="text-sm text-gray-500 mt-2 line-clamp-3">{book.explanation}</p>
+                    <h4 className="mb-1 text-sm font-semibold text-indigo-900 line-clamp-2 sm:text-base">{book.title}</h4>
+                    <p className="text-xs text-gray-600 sm:text-sm">{getDisplayName(book)}</p>
+                    <p className="mt-2 text-xs text-gray-500 line-clamp-3 sm:text-sm">{book.explanation}</p>
+                    {book.justbookify_link && (
+                      <a 
+                        href={book.justbookify_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center mt-2 text-xs font-medium text-indigo-600 hover:text-indigo-800 group sm:text-sm"
+                      >
+                        <span className="truncate">View on Justbookify</span>
+                        <ExternalLink className="w-3 h-3 ml-1 transition-transform group-hover:translate-x-1 flex-shrink-0 sm:w-4 sm:h-4" />
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-              <BookMarked className="w-8 h-8 text-indigo-600" />
+          <div className="py-6 text-center sm:py-8">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-indigo-100 rounded-full sm:w-16 sm:h-16">
+              <BookMarked className="w-6 h-6 text-indigo-600 sm:w-8 sm:h-8" />
             </div>
-            <h4 className="text-lg font-semibold text-indigo-800 mb-2">
+            <h4 className="mb-2 text-base font-semibold text-indigo-800 sm:text-lg">
               Personalized Recommendations Coming Soon!
             </h4>
-            <p className="text-indigo-600 mb-4">
+            <p className="mb-4 text-sm text-indigo-600 sm:text-base">
               We're working on finding the perfect books for you based on your unique preferences.
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-xs text-gray-600 sm:text-sm">
               In the meantime, explore popular books for your age group or ask your librarian for recommendations 
-              in the genres you selected: <strong>{selectedGenres.join(', ')}</strong>
+              in the genres you selected: <strong className="break-words">{selectedGenres.join(', ')}</strong>
             </p>
           </div>
         )}
@@ -514,46 +525,46 @@ const Results: React.FC = () => {
 
       {/* Series/Author Recommendations */}
       {seriesRecommendations.length > 0 && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl mb-8 border border-blue-100 shadow-sm">
-          <h3 className="font-bold text-xl mb-5 text-blue-800 flex items-center">
-            <BookOpen className="w-6 h-6 mr-2 text-blue-600" />
+        <div className="p-4 mb-6 border border-blue-100 shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl mx-4 sm:mx-0 sm:p-6 sm:mb-8">
+          <h3 className="flex items-center mb-4 text-lg font-bold text-blue-800 sm:mb-5 sm:text-xl">
+            <BookOpen className="w-5 h-5 mr-2 text-blue-600 sm:w-6 sm:h-6" />
             Series & Authors You'll Love
           </h3>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-4 sm:gap-6 sm:grid-cols-2">
             {seriesRecommendations.map((rec, index) => (
-              <div key={index} className="bg-white p-5 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <div key={index} className="p-4 transition-shadow bg-white rounded-lg shadow-sm hover:shadow-md sm:p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-lg text-blue-900">{rec.name}</h4>
-                  <div className="flex items-center bg-blue-100 px-3 py-1 rounded-full">
-                    <Star className="w-4 h-4 text-yellow-500 mr-1" />
-                    <span className="text-sm font-medium text-blue-800">{rec.confidence_score}/10</span>
+                  <h4 className="text-base font-semibold text-blue-900 sm:text-lg">{rec.name}</h4>
+                  <div className="flex items-center px-2 py-1 bg-blue-100 rounded-full sm:px-3">
+                    <Star className="w-3 h-3 mr-1 text-yellow-500 sm:w-4 sm:h-4" />
+                    <span className="text-xs font-medium text-blue-800 sm:text-sm">{rec.confidence_score}/10</span>
                   </div>
                 </div>
-                <p className="text-gray-600 mb-3 line-clamp-3">{rec.rationale}</p>
+                <p className="mb-3 text-sm text-gray-600 line-clamp-3 sm:text-base">{rec.rationale}</p>
                 <a 
                   href={rec.justbookify_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium mb-3 group"
+                  className="inline-flex items-center mb-3 text-sm font-medium text-blue-600 hover:text-blue-800 group"
                 >
-                  <span>View on Justbookify</span>
-                  <ExternalLink className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                  <span className="truncate">View on Justbookify</span>
+                  <ExternalLink className="w-3 h-3 ml-1 transition-transform group-hover:translate-x-1 flex-shrink-0 sm:w-4 sm:h-4" />
                 </a>
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                  <h5 className="font-medium text-gray-900 mb-2">Featured Books:</h5>
+                <div className="pt-3 mt-3 border-t border-gray-100">
+                  <h5 className="mb-2 text-sm font-medium text-gray-900 sm:text-base">Featured Books:</h5>
                   <ul className="space-y-2">
                     {rec.sample_books.map((book, bookIndex) => (
-                      <li key={bookIndex} className="text-sm text-gray-600 flex items-start">
-                        <BookMarked className="w-4 h-4 mr-2 mt-1 text-blue-500" />
-                        <span>
+                      <li key={bookIndex} className="flex items-start text-xs text-gray-600 sm:text-sm">
+                        <BookMarked className="w-3 h-3 mt-1 mr-2 text-blue-500 flex-shrink-0 sm:w-4 sm:h-4" />
+                        <div className="min-w-0 flex-1">
                           {book.series && (
-                            <div className="text-xs font-medium text-indigo-800 mb-0.5">
+                            <div className="text-xs font-medium text-indigo-800 mb-0.5 truncate">
                               {book.series} Series
                             </div>
                           )}
-                          <span className="font-medium text-gray-800">{book.title}</span>
-                          <span className="block text-xs text-gray-500">by {book.author}</span>
-                        </span>
+                          <div className="font-medium text-gray-800 truncate">{book.title}</div>
+                          <div className="text-xs text-gray-500 truncate">by {book.author}</div>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -565,59 +576,70 @@ const Results: React.FC = () => {
       )}
 
       {/* Future Reading Plan */}
-      <div className="bg-gradient-to-br from-pink-50 to-orange-50 p-6 rounded-xl mb-8 border border-pink-100 shadow-sm">
-        <h3 className="font-bold text-xl mb-5 text-pink-800 flex items-center">
-          <Calendar className="w-6 h-6 mr-2 text-pink-600" />
+      <div className="p-4 mb-6 border border-pink-100 shadow-sm bg-gradient-to-br from-pink-50 to-orange-50 rounded-xl mx-4 sm:mx-0 sm:p-6 sm:mb-8">
+        <h3 className="flex items-center mb-4 text-lg font-bold text-pink-800 sm:mb-5 sm:text-xl">
+          <Calendar className="w-5 h-5 mr-2 text-pink-600 sm:w-6 sm:h-6" />
           Your 3-Month Reading Journey
         </h3>
         
         {hasFutureRecommendations ? (
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredFutureReadingPlan.map((monthObj, index) => (
-              <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
-                <h4 className="font-semibold text-lg text-pink-700 mb-3">{monthObj.month}</h4>
+              <div key={index} className="p-3 bg-white rounded-lg shadow-sm sm:p-4">
+                <h4 className="mb-3 text-base font-semibold text-pink-700 sm:text-lg">{monthObj.month}</h4>
                 <ul className="space-y-3">
                   {monthObj.books.map((book, bookIndex) => (
-                    <li key={bookIndex} className="border-l-2 border-pink-200 pl-3 relative group">
+                    <li key={bookIndex} className="relative pl-3 border-l-2 border-pink-200 group">
                       <button
                         onClick={() => handleDislikeBook(book)}
-                        className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded-full"
+                        className="absolute top-0 right-0 p-1 transition-opacity rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-50 z-10"
                         title="Remove this book"
                       >
                         <X className="w-3 h-3 text-red-500" />
                       </button>
                       {book.series && (
                         <div className="mb-1">
-                          <span className="text-xs font-medium text-indigo-800">{book.series} Series</span>
+                          <span className="text-xs font-medium text-indigo-800 truncate block">{book.series} Series</span>
                         </div>
                       )}
-                      <div className="font-medium text-gray-900">{book.title}</div>
-                      <div className="text-sm text-gray-600">{getDisplayName(book)}</div>
-                      <div className="text-sm text-gray-500 mt-1 line-clamp-2">{book.explanation}</div>
+                      <div className="font-medium text-gray-900 text-sm sm:text-base line-clamp-2">{book.title}</div>
+                      <div className="text-xs text-gray-600 sm:text-sm">{getDisplayName(book)}</div>
+                      <div className="mt-1 text-xs text-gray-500 line-clamp-2 sm:text-sm">{book.explanation}</div>
+                      {book.justbookify_link && (
+                        <a 
+                          href={book.justbookify_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center mt-1 text-xs font-medium text-pink-600 hover:text-pink-800 group"
+                        >
+                          <span className="truncate">View on Justbookify</span>
+                          <ExternalLink className="w-3 h-3 ml-1 transition-transform group-hover:translate-x-1 flex-shrink-0" />
+                        </a>
+                      )}
                     </li>
                   ))}
                   {monthObj.books.length === 0 && (
-                    <li className="text-gray-500 italic">More recommendations coming soon!</li>
+                    <li className="italic text-xs text-gray-500 sm:text-sm">More recommendations coming soon!</li>
                   )}
                 </ul>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <div className="mx-auto w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mb-4">
-              <Calendar className="w-8 h-8 text-pink-600" />
+          <div className="py-6 text-center sm:py-8">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-pink-100 rounded-full sm:w-16 sm:h-16">
+              <Calendar className="w-6 h-6 text-pink-600 sm:w-8 sm:h-8" />
             </div>
-            <h4 className="text-lg font-semibold text-pink-800 mb-2">
+            <h4 className="mb-2 text-base font-semibold text-pink-800 sm:text-lg">
               Your Reading Journey is Being Planned!
             </h4>
-            <p className="text-pink-700 mb-4">
+            <p className="mb-4 text-sm text-pink-700 sm:text-base">
               We're creating a personalized 3-month reading plan based on your preferences.
             </p>
-            <p className="text-sm text-gray-600">
-              Consider starting with books from your favorite genres: <strong>{allSelectedGenres.join(', ')}</strong>
+            <p className="text-xs text-gray-600 sm:text-sm">
+              Consider starting with books from your favorite genres: <strong className="break-words">{allSelectedGenres.join(', ')}</strong>
               {selectedInterests.length > 0 && (
-                <span> and topics like: <strong>{selectedInterests.join(', ')}</strong></span>
+                <span> and topics like: <strong className="break-words">{selectedInterests.join(', ')}</strong></span>
               )}
             </p>
           </div>
@@ -626,34 +648,34 @@ const Results: React.FC = () => {
 
       {/* Helpful Tips Section - only show when no recommendations */}
       {!hasAnyRecommendations && (
-        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl mb-8 border border-blue-200 shadow-sm">
-          <h3 className="font-bold text-xl mb-5 text-blue-800 flex items-center">
-            <BookOpen className="w-6 h-6 mr-2 text-blue-600" />
+        <div className="p-4 mb-6 border border-blue-200 shadow-sm bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl mx-4 sm:mx-0 sm:p-6 sm:mb-8">
+          <h3 className="flex items-center mb-4 text-lg font-bold text-blue-800 sm:mb-5 sm:text-xl">
+            <BookOpen className="w-5 h-5 mr-2 text-blue-600 sm:w-6 sm:h-6" />
             How to Find Your Next Great Read
           </h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="bg-white p-4 rounded-lg shadow-sm">
-              <h4 className="font-semibold text-blue-800 mb-2">🏛️ Visit Your Library</h4>
-              <p className="text-sm text-gray-600">
-                Ask your librarian for recommendations in <strong>{allSelectedGenres.join(', ')}</strong>. 
+          <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+            <div className="p-3 bg-white rounded-lg shadow-sm sm:p-4">
+              <h4 className="mb-2 text-sm font-semibold text-blue-800 sm:text-base">🏛️ Visit Your Library</h4>
+              <p className="text-xs text-gray-600 sm:text-sm">
+                Ask your librarian for recommendations in <strong className="break-words">{allSelectedGenres.join(', ')}</strong>. 
                 They're experts at matching readers with perfect books!
               </p>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow-sm">
-              <h4 className="font-semibold text-blue-800 mb-2">👥 Ask Friends & Family</h4>
-              <p className="text-sm text-gray-600">
+            <div className="p-3 bg-white rounded-lg shadow-sm sm:p-4">
+              <h4 className="mb-2 text-sm font-semibold text-blue-800 sm:text-base">👥 Ask Friends & Family</h4>
+              <p className="text-xs text-gray-600 sm:text-sm">
                 What are your friends reading? Sometimes the best recommendations come from people who know you well.
               </p>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow-sm">
-              <h4 className="font-semibold text-blue-800 mb-2">🏆 Try Award Winners</h4>
-              <p className="text-sm text-gray-600">
+            <div className="p-3 bg-white rounded-lg shadow-sm sm:p-4">
+              <h4 className="mb-2 text-sm font-semibold text-blue-800 sm:text-base">🏆 Try Award Winners</h4>
+              <p className="text-xs text-gray-600 sm:text-sm">
                 Look for books that have won awards for your age group - they're often crowd-pleasers!
               </p>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow-sm">
-              <h4 className="font-semibold text-blue-800 mb-2">📚 Explore Book Series</h4>
-              <p className="text-sm text-gray-600">
+            <div className="p-3 bg-white rounded-lg shadow-sm sm:p-4">
+              <h4 className="mb-2 text-sm font-semibold text-blue-800 sm:text-base">📚 Explore Book Series</h4>
+              <p className="text-xs text-gray-600 sm:text-sm">
                 If you find one book you like, check if it's part of a series - you might love the whole collection!
               </p>
             </div>
@@ -662,13 +684,13 @@ const Results: React.FC = () => {
       )}
 
       {/* Share Options */}
-      <div className="bg-white p-6 rounded-xl border border-gray-200 mb-8 shadow-sm">
-        <h3 className="font-semibold text-lg mb-4 text-gray-800">Save Your Reading Journey</h3>
-        <div className="space-y-4">
+      <div className="p-4 mb-6 bg-white border border-gray-200 shadow-sm rounded-xl mx-4 sm:mx-0 sm:p-6 sm:mb-8">
+        <h3 className="mb-4 text-base font-semibold text-gray-800 sm:text-lg">Save Your Reading Journey</h3>
+        <div className="space-y-3 sm:space-y-4">
           {/* <button
             onClick={handleEmailRecommendations}
             disabled={isSubmitting}
-            className="w-full p-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group"
+            className="flex items-center justify-center w-full p-4 text-white transition-all bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed group"
           >
             <Send className="w-5 h-5 mr-2 transition-transform group-hover:-translate-y-1" />
             Send to Email ({parentEmail})
@@ -677,35 +699,35 @@ const Results: React.FC = () => {
           <button
             onClick={handleWhatsAppRecommendations}
             disabled={isSubmitting}
-            className="w-full p-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group"
+            className="flex items-center justify-center w-full p-3 text-white transition-all bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed group sm:p-4"
           >
-            <Send className="w-5 h-5 mr-2 transition-transform group-hover:-translate-y-1" />
-            Send to WhatsApp ({parentPhone})
+            <Send className="w-4 h-4 mr-2 transition-transform group-hover:-translate-y-1 sm:w-5 sm:h-5" />
+            <span className="truncate">Send to WhatsApp ({parentPhone})</span>
           </button>
 
           {success && (
-            <div className="bg-green-50 text-green-700 p-3 rounded-lg text-center">
-              <p className="font-medium">{success}</p>
+            <div className="p-3 text-center text-green-700 rounded-lg bg-green-50">
+              <p className="text-sm font-medium sm:text-base">{success}</p>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 text-red-700 p-3 rounded-lg text-center">
-              <p className="font-medium">{error}</p>
+            <div className="p-3 text-center text-red-700 rounded-lg bg-red-50">
+              <p className="text-sm font-medium sm:text-base">{error}</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Start Over Button */}
-      <div className="flex justify-center">
+      <div className="flex justify-center px-4 sm:px-0">
         <Button
           onClick={resetQuiz}
           variant="outline"
-          className="flex items-center group hover:bg-gray-50"
+          className="flex items-center group hover:bg-gray-50 text-sm sm:text-base"
         >
-          <RefreshCw className="w-5 h-5 mr-2 group-hover:rotate-180 transition-transform duration-500" />
-          Start New Reading Journey
+          <RefreshCw className="w-4 h-4 mr-2 transition-transform duration-500 group-hover:rotate-180 sm:w-5 sm:h-5" />
+          <span className="truncate">Start New Reading Journey</span>
         </Button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QuizProvider } from './context/QuizContext';
+import { ToastProvider } from './context/ToastContext';
 import QuizContainer from './components/QuizContainer';
 import AdminLayout from './components/admin/AdminLayout';
 import AdminLogin from './components/admin/AdminLogin';
@@ -10,16 +11,17 @@ import Logo from './assets/logo.jpg';
 
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-gradient-to-b from-[#54d9ff]/10 to-[#aadb4d]/10 flex flex-col justify-between">
-        <header className="p-4 bg-white shadow-sm">
-          <div className="container flex items-center mx-auto">
-            <img src={Logo} alt="JustBookify Logo" className="w-8 h-8 mr-2 brand-blue-text" />
-            <h1 className="text-xl font-bold brand-blue-text">JustBookify</h1>
+    <ToastProvider>
+      <Router>
+        <div className="min-h-screen bg-gradient-to-b from-[#54d9ff]/10 to-[#aadb4d]/10 flex flex-col justify-between">
+        <header className="p-3 sm:p-4 bg-white shadow-sm">
+          <div className="container flex items-center mx-auto px-2 sm:px-4">
+            <img src={Logo} alt="JustBookify Logo" className="w-7 h-7 sm:w-8 sm:h-8 mr-2 brand-blue-text" />
+            <h1 className="text-lg sm:text-xl font-bold brand-blue-text">JustBookify</h1>
           </div>
         </header>
 
-        <main className="container flex-grow p-4 mx-auto">
+        <main className="container flex-grow p-2 sm:p-4 mx-auto max-w-4xl">
           <Routes>
             <Route
               path="/"
@@ -64,7 +66,8 @@ function App() {
           </div>
         </footer>
       </div>
-    </Router>
+      </Router>
+    </ToastProvider>
   );
 }
 

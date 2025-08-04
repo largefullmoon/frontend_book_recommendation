@@ -48,9 +48,9 @@ const AdditionalGenres: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-indigo-800 mb-4">Any Other Genres You Like?</h2>
-        <p className="text-gray-600">
+      <div className="text-center px-4 sm:px-0">
+        <h2 className="mb-4 text-xl sm:text-2xl font-bold text-indigo-800">Any Other Genres You Like?</h2>
+        <p className="text-gray-600 text-sm sm:text-base">
           From the remaining genres, select any others you'd enjoy reading.
           {selectedAdditional.length > 0 && (
             <span className="block mt-2 text-sm text-indigo-600">
@@ -61,45 +61,47 @@ const AdditionalGenres: React.FC = () => {
       </div>
 
       {remainingGenres.length > 0 ? (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-4 sm:px-0">
           {remainingGenres.map((genre) => (
             <Card
               key={genre.name}
               selected={selectedAdditional.includes(genre.name)}
               selectable
               onClick={() => toggleGenre(genre.name)}
-              className="flex items-center p-4"
+              className="flex items-center p-3 sm:p-4"
             >
-              <span className="text-2xl mr-3">{genre.icon}</span>
+              <span className="mr-2 sm:mr-3 text-xl sm:text-2xl">{genre.icon}</span>
               <div className="flex-1">
-                <p className="text-md font-medium">{genre.name}</p>
+                <p className="font-medium text-sm sm:text-md">{genre.name}</p>
               </div>
               
               {selectedAdditional.includes(genre.name) && (
-                <div className="h-6 w-6 rounded-full bg-indigo-100 flex items-center justify-center">
-                  <div className="h-4 w-4 rounded-full bg-indigo-600"></div>
+                <div className="flex items-center justify-center w-6 h-6 bg-indigo-100 rounded-full">
+                  <div className="w-4 h-4 bg-indigo-600 rounded-full"></div>
                 </div>
               )}
             </Card>
           ))}
         </div>
       ) : (
-        <div className="text-center py-8">
-          <p className="text-gray-500 text-lg">You've already selected all available genres!</p>
-          <p className="text-gray-400 text-sm mt-2">Great job exploring different reading preferences!</p>
+        <div className="py-8 text-center">
+          <p className="text-lg text-gray-500">You've already selected all available genres!</p>
+          <p className="mt-2 text-sm text-gray-400">Great job exploring different reading preferences!</p>
         </div>
       )}
 
-      <div className="flex justify-between pt-4">
+      <div className="flex justify-between pt-4 px-4 sm:px-0">
         <Button 
           variant="outline" 
           onClick={prevStage}
+          className="text-sm sm:text-base px-3 sm:px-4 py-2"
         >
           Back
         </Button>
         
         <Button 
           onClick={handleContinue}
+          className="text-sm sm:text-base px-3 sm:px-4 py-2"
         >
           Continue
         </Button>

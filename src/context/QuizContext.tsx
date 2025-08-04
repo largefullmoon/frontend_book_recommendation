@@ -131,7 +131,7 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (s === 'youngInterests' && age > 5) return false;
       if (s === 'fictionGenres' && age <= 10) return false;
       if (s === 'nonFictionGenres' && age <= 10) return false;
-      if (s === 'additionalGenres' && age <= 10) return false;
+      if (s === 'additionalGenres' && (age <= 10 || age > 11)) return false;
       if (s === 'fictionNonFictionRatio' && age <= 10) return false;
       
       return true;
@@ -346,7 +346,13 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsSaving(false);
     }
     
-    setStage(stageMap[stage]);
+    // For users aged 11+, skip additionalGenres stage after nonFictionGenres
+    let nextStage = stageMap[stage];
+    if (stage === 'nonFictionGenres' && age && age > 11) {
+      nextStage = 'fictionNonFictionRatio';
+    }
+    
+    setStage(nextStage);
   };
 
   const getGenreStageForAge = (): QuizStage => {
@@ -376,7 +382,13 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       'results': 'bookSeries'
     };
     
-    setStage(reverseStageMap[stage]);
+    // For users aged 11+, handle reverse navigation from fictionNonFictionRatio
+    let previousStage = reverseStageMap[stage];
+    if (stage === 'fictionNonFictionRatio' && age && age > 11) {
+      previousStage = 'nonFictionGenres';
+    }
+    
+    setStage(previousStage);
   };
 
   const getPreviousStageForBookSeries = (): QuizStage => {

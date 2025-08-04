@@ -68,7 +68,7 @@ const AdditionalGenresYoung: React.FC = () => {
     },
     { 
       id: 'non-fiction', 
-      label: 'Real and true stories – facts, history, biographies, and amazing places',
+      label: 'Sports, Real and true stories – sports, facts, history, biographies, and amazing places',
       image: nonFictionImg
     }
   ];
@@ -98,29 +98,47 @@ const AdditionalGenresYoung: React.FC = () => {
         </p>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 mb-8 px-2 sm:px-0">
         {remainingGenres.map((genre) => (
           <Card
             key={genre.id}
             selected={additionalGenres.includes(genre.id)}
             selectable
             onClick={() => handleGenreClick(genre.id)}
-            className="flex flex-col items-center p-4 hover:shadow-md transition-shadow duration-200 text-center"
+            className={`
+              relative flex flex-col items-center p-3 sm:p-4 
+              hover:shadow-lg transition-all duration-300 ease-in-out text-center
+              transform hover:-translate-y-1 
+              ${additionalGenres.includes(genre.id) ? 'ring-2 ring-pink-500 shadow-md' : ''}
+            `}
           >
-            <div className={`mb-3 p-5 rounded-lg bg-gray-50 ${additionalGenres.includes(genre.id) ? 'bg-pink-50' : ''}`}>
+            <div className={`
+              w-full mb-3 p-3 sm:p-4 rounded-xl 
+              ${additionalGenres.includes(genre.id) ? 'bg-pink-50' : 'bg-gray-50'}
+              transition-colors duration-300
+            `}>
               <img 
                 src={genre.image} 
                 alt={genre.label}
-                className="w-48 h-48 object-contain"
+                className="w-full h-32 sm:h-40 lg:h-48 object-contain mx-auto 
+                         transform transition-transform duration-300 
+                         hover:scale-105"
+                loading="lazy"
               />
             </div>
             
-            <div className="flex-1">
-              <p className="text-sm font-medium leading-tight">{genre.label}</p>
+            <div className="flex-1 w-full">
+              <p className="text-xs sm:text-sm font-medium leading-tight 
+                          text-gray-800 hover:text-gray-900 
+                          transition-colors duration-200">
+                {genre.label}
+              </p>
             </div>
             
             {additionalGenres.includes(genre.id) && (
-              <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-pink-100 flex items-center justify-center">
+              <div className="absolute top-2 right-2 h-5 w-5 rounded-full 
+                            bg-pink-100 flex items-center justify-center
+                            transform scale-100 animate-pulse">
                 <div className="h-3 w-3 rounded-full bg-pink-600"></div>
               </div>
             )}

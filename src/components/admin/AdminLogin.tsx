@@ -1,29 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 
 const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
+  const { showError } = useToast();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
     try {
-      // Here you would implement actual authentication
-      // For now, we'll use a mock check
       if (username === 'admin' && password === 'admin') {
-        // In a real app, you would store the auth token
         localStorage.setItem('adminAuth', 'true');
         navigate('/admin/books');
       } else {
-        setError('Invalid credentials');
+        showError('Invalid credentials');
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      showError('An error occurred. Please try again.');
     }
   };
 
@@ -67,9 +64,7 @@ const AdminLogin: React.FC = () => {
             />
           </div>
 
-          {error && (
-            <div className="text-sm text-center text-red-500">{error}</div>
-          )}
+
 
           <button
             type="submit"

@@ -224,18 +224,18 @@ const BookSeries: React.FC = () => {
   }
 
   return (
-    <div className="animate-fadeIn">
-      <div className="text-center mb-6">
-        <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-          <BookOpenCheck className="w-8 h-8 text-indigo-500" />
+    <div className="animate-fadeIn px-4 sm:px-0">
+      <div className="text-center mb-4 sm:mb-6">
+        <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+          <BookOpenCheck className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-500" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
           Have you read these books?
         </h2>
-        <p className="text-gray-600">
+        <p className="text-sm sm:text-base text-gray-600">
           Please select whether you've read each book, {name}!
         </p>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-xs sm:text-sm text-gray-500 mt-1">
           Page {currentPage + 1} of {totalPages}
         </p>
       </div>
@@ -250,26 +250,26 @@ const BookSeries: React.FC = () => {
         </div>
       )}
 
-      <div className="space-y-4 mb-8">
+      <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
         {currentSeries.map((book) => (
           <div key={book.id}>
-            <Card className="p-4">
-              <div className="space-y-3">
+            <Card className="p-3 sm:p-4">
+              <div className="space-y-2 sm:space-y-3">
                 <div>
-                  <h3 className="font-medium">{book.title}</h3>
-                  <p className="text-sm text-gray-600">{book.author}</p>
+                  <h3 className="text-sm sm:text-base font-medium">{book.title}</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">{book.author}</p>
                 </div>
                 
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                   <label className="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="radio"
                       name={`readStatus-${book.id}`}
                       checked={hasReadSeries(book.id)}
                       onChange={() => handleReadStatusChange(book.id, true)}
-                      className="form-radio text-indigo-600"
+                      className="form-radio text-indigo-600 w-4 h-4"
                     />
-                    <span className="text-sm">Read</span>
+                    <span className="text-xs sm:text-sm">Read</span>
                   </label>
                   <label className="flex items-center space-x-2 cursor-pointer">
                     <input
@@ -277,9 +277,9 @@ const BookSeries: React.FC = () => {
                       name={`readStatus-${book.id}`}
                       checked={bookSeries.some(item => item.seriesId === book.id && !item.hasRead)}
                       onChange={() => handleReadStatusChange(book.id, false)}
-                      className="form-radio text-indigo-600"
+                      className="form-radio text-indigo-600 w-4 h-4"
                     />
-                    <span className="text-sm">Didn't Read</span>
+                    <span className="text-xs sm:text-sm">Didn't Read</span>
                   </label>
                 </div>
 
@@ -296,15 +296,16 @@ const BookSeries: React.FC = () => {
         ))}
       </div>
       
-      <div className="flex justify-between">
+      <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
         <Button 
           variant="outline" 
           onClick={currentPage > 0 ? () => setCurrentPage(prev => prev - 1) : prevStage}
+          className="text-sm sm:text-base px-3 sm:px-4 py-2 w-full sm:w-auto"
         >
           {currentPage > 0 ? 'Previous Page' : 'Back'}
         </Button>
         
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
           {/* Skip Books Button - only show if no books have been marked as read */}
           {bookSeries.filter(item => 
             recommendedBooks.some(book => book.id === item.seriesId) && item.hasRead
@@ -318,7 +319,7 @@ const BookSeries: React.FC = () => {
                   nextStage();
                 }, 2000);
               }}
-              className="text-gray-600 hover:text-gray-800"
+              className="text-sm sm:text-base px-3 sm:px-4 py-2 text-gray-600 hover:text-gray-800 w-full sm:w-auto"
             >
               Skip Books
             </Button>
@@ -326,6 +327,7 @@ const BookSeries: React.FC = () => {
           
           <Button 
             onClick={handleNextPage}
+            className="text-sm sm:text-base px-3 sm:px-4 py-2 w-full sm:w-auto"
           >
             {currentPage < totalPages - 1 ? 'Next Page' : 'Finish'}
           </Button>
