@@ -101,7 +101,7 @@ const UserTracking: React.FC = () => {
         email: searchTerm
       });
 
-      const response = await fetch(`http://localhost:5000/recommendation-plans?${params}`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/recommendation-plans?${params}`);
       const data = await response.json();
       
       if (data.success) {
@@ -116,7 +116,7 @@ const UserTracking: React.FC = () => {
 
   const fetchQuizUsers = async () => {
     try {
-      const response = await fetch('http://localhost:5000/quiz/users');
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/quiz/users`);
       const data = await response.json();
       
       if (data.success) {
@@ -145,7 +145,7 @@ const UserTracking: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/recommendation-plans/stats');
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/recommendation-plans/stats`);
       const data = await response.json();
       
       if (data.success) {
@@ -165,7 +165,7 @@ const UserTracking: React.FC = () => {
     if (!confirm('Are you sure you want to delete this recommendation plan?')) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/recommendation-plans/${planId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/recommendation-plans/${planId}`, {
         method: 'DELETE'
       });
       
@@ -612,39 +612,6 @@ const UserTracking: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">User Tracking & Analytics</h1>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setActiveTab('plans')}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              activeTab === 'plans'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300'
-            }`}
-          >
-            Recommendation Plans
-          </button>
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              activeTab === 'users'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300'
-            }`}
-          >
-            Quiz Users
-          </button>
-          <button
-            onClick={() => setActiveTab('analytics')}
-            className={`px-4 py-2 rounded-lg font-medium flex items-center ${
-              activeTab === 'analytics'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300'
-            }`}
-          >
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Analytics
-          </button>
-        </div>
       </div>
 
       {activeTab === 'analytics' ? (

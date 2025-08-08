@@ -29,11 +29,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       label: 'Recommendations',
       icon: BookOpen
     },
-    {
-      path: '/admin/users',
-      label: 'Users',
-      icon: Users
-    },
+    // {
+    //   path: '/admin/users',
+    //   label: 'Users',
+    //   icon: Users
+    // },
     {
       path: '/admin/tracking',
       label: 'User Tracking',
@@ -65,7 +65,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </nav>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors mt-4"
+          className="flex items-center w-full px-4 py-3 mt-4 text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
         >
           Logout
         </button>

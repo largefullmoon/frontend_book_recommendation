@@ -22,7 +22,7 @@ function App() {
           </div>
         </header>
 
-        <main className="container flex-grow p-2 sm:p-4 mx-auto max-w-4xl">
+        <main className="container flex-grow p-2 sm:p-4 mx-auto w-full">
           <Routes>
             <Route
               path="/"
