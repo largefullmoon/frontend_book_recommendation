@@ -27,6 +27,8 @@ interface SampleBook {
 
 interface Recommendation {
   name: string;
+  series_name?: string;
+  author_name?: string;
   justbookify_link: string;
   rationale: string;
   confidence_score: number;
@@ -381,15 +383,15 @@ const Results: React.FC = () => {
   const hasPositiveBookResponses = positiveResponses.length > 0;
 
   return (
-    <div className="animate-fadeIn max-w-full overflow-hidden">
+    <div className="animate-fadeIn w-full overflow-x-hidden">
       <div className="mb-6 px-4 text-center sm:mb-8 sm:px-0">
         <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full shadow-lg bg-gradient-to-br from-indigo-400 to-purple-500 sm:w-20 sm:h-20">
           <BookMarked className="w-8 h-8 text-white sm:w-10 sm:h-10" />
         </div>
-        <h2 className="mb-3 text-2xl font-bold text-indigo-800 sm:text-3xl">
+        <h2 className="mb-3 text-2xl font-bold text-indigo-800 sm:text-3xl break-words">
           Great job, {name}! 📚
         </h2>
-        <p className="max-w-2xl mx-auto mb-4 px-2 text-base text-gray-600 sm:text-lg sm:px-0">
+        <p className="max-w-2xl mx-auto mb-4 px-2 text-base text-gray-600 sm:text-lg sm:px-0 break-words">
           {hasAnyRecommendations 
             ? `Based on your age (${age} years) and interests, we've curated a personalized reading journey just for you.`
             : `Based on your age (${age} years) and interests, we're excited to introduce you to some amazing new books!`
@@ -419,11 +421,11 @@ const Results: React.FC = () => {
             <h3 className="mb-3 text-lg font-bold text-yellow-800 sm:text-xl">
               Discovering New Favorites! 🌟
             </h3>
-            <p className="mb-4 text-sm text-yellow-700 sm:text-base">
+            <p className="mb-4 text-sm text-yellow-700 sm:text-base break-words">
               We noticed the books you've read weren't quite your style - that's totally normal! 
               Everyone has different tastes, and that's what makes reading exciting. 
             </p>
-            <p className="text-sm text-yellow-700 sm:text-base">
+            <p className="text-sm text-yellow-700 sm:text-base break-words">
               We've carefully selected books based on your interests and preferences that we think you'll love. 
               Sometimes the best books are the ones we haven't discovered yet!
             </p>
@@ -441,11 +443,11 @@ const Results: React.FC = () => {
             <h3 className="mb-3 text-lg font-bold text-green-800 sm:text-xl">
               Your Reading Adventure Begins! 🚀
             </h3>
-            <p className="mb-4 text-sm text-green-700 sm:text-base">
+            <p className="mb-4 text-sm text-green-700 sm:text-base break-words">
               How exciting - you're about to discover some amazing books! 
               We've picked these recommendations based on your interests and what other readers your age love.
             </p>
-            <p className="text-sm text-green-700 sm:text-base">
+            <p className="text-sm text-green-700 sm:text-base break-words">
               Every great reader started somewhere, and we're here to help you find books that will spark your imagination!
             </p>
           </div>
@@ -460,9 +462,9 @@ const Results: React.FC = () => {
         </h3>
         
         {hasCurrentRecommendations ? (
-          <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredCurrentRecommendations.map((book, index) => (
-              <div key={index} className="relative p-3 transition-shadow bg-white rounded-lg shadow-sm hover:shadow-md group sm:p-4">
+              <div key={index} className="relative p-3 transition-shadow bg-white rounded-lg shadow-sm hover:shadow-md group sm:p-4 w-full">
                 <button
                   onClick={() => handleDislikeBook(book)}
                   className="absolute p-1 transition-opacity rounded-full opacity-0 top-2 right-2 group-hover:opacity-100 hover:bg-red-50 z-10"
@@ -476,24 +478,24 @@ const Results: React.FC = () => {
                       <BookMarked className="w-4 h-4 text-indigo-600 sm:w-5 sm:h-5" />
                     </div>
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 overflow-hidden">
                     {book.series && (
                       <div className="mb-2">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                          <Library className="w-3 h-3 mr-1" />
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 max-w-full">
+                          <Library className="w-3 h-3 mr-1 flex-shrink-0" />
                           <span className="truncate">{book.series} Series</span>
                         </span>
                       </div>
                     )}
-                    <h4 className="mb-1 text-sm font-semibold text-indigo-900 line-clamp-2 sm:text-base">{book.title}</h4>
-                    <p className="text-xs text-gray-600 sm:text-sm">{getDisplayName(book)}</p>
-                    <p className="mt-2 text-xs text-gray-500 line-clamp-3 sm:text-sm">{book.explanation}</p>
+                    <h4 className="mb-1 text-sm font-semibold text-indigo-900 break-words sm:text-base">{book.title}</h4>
+                    <p className="text-xs text-gray-600 sm:text-sm break-words">{getDisplayName(book)}</p>
+                    <p className="mt-2 text-xs text-gray-500 break-words sm:text-sm">{book.explanation}</p>
                     {book.justbookify_link && (
                       <a 
                         href={book.justbookify_link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center mt-2 text-xs font-medium text-indigo-600 hover:text-indigo-800 group sm:text-sm"
+                        className="inline-flex items-center mt-2 text-xs font-medium text-indigo-600 hover:text-indigo-800 group break-all sm:text-sm"
                       >
                         <span className="truncate">View on Justbookify</span>
                         <ExternalLink className="w-3 h-3 ml-1 transition-transform group-hover:translate-x-1 flex-shrink-0 sm:w-4 sm:h-4" />
@@ -512,10 +514,10 @@ const Results: React.FC = () => {
             <h4 className="mb-2 text-base font-semibold text-indigo-800 sm:text-lg">
               Personalized Recommendations Coming Soon!
             </h4>
-            <p className="mb-4 text-sm text-indigo-600 sm:text-base">
+            <p className="mb-4 text-sm text-indigo-600 sm:text-base break-words">
               We're working on finding the perfect books for you based on your unique preferences.
             </p>
-            <p className="text-xs text-gray-600 sm:text-sm">
+            <p className="text-xs text-gray-600 sm:text-sm break-words">
               In the meantime, explore popular books for your age group or ask your librarian for recommendations 
               in the genres you selected: <strong className="break-words">{selectedGenres.join(', ')}</strong>
             </p>
@@ -530,22 +532,29 @@ const Results: React.FC = () => {
             <BookOpen className="w-5 h-5 mr-2 text-blue-600 sm:w-6 sm:h-6" />
             Series & Authors You'll Love
           </h3>
-          <div className="grid gap-4 sm:gap-6 sm:grid-cols-2">
+          <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
             {seriesRecommendations.map((rec, index) => (
-              <div key={index} className="p-4 transition-shadow bg-white rounded-lg shadow-sm hover:shadow-md sm:p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-base font-semibold text-blue-900 sm:text-lg">{rec.name}</h4>
-                  <div className="flex items-center px-2 py-1 bg-blue-100 rounded-full sm:px-3">
+              <div key={index} className="p-4 transition-shadow bg-white rounded-lg shadow-sm hover:shadow-md sm:p-5 w-full">
+                <div className="flex items-start justify-between mb-3 gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-base font-semibold text-blue-900 sm:text-lg break-words">
+                      {rec.series_name || rec.name}
+                    </h4>
+                    {rec.author_name && (
+                      <p className="text-sm text-blue-700 break-words">by {rec.author_name}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center px-2 py-1 bg-blue-100 rounded-full sm:px-3 flex-shrink-0">
                     <Star className="w-3 h-3 mr-1 text-yellow-500 sm:w-4 sm:h-4" />
                     <span className="text-xs font-medium text-blue-800 sm:text-sm">{rec.confidence_score}/10</span>
                   </div>
                 </div>
-                <p className="mb-3 text-sm text-gray-600 line-clamp-3 sm:text-base">{rec.rationale}</p>
+                <p className="mb-3 text-sm text-gray-600 break-words sm:text-base">{rec.rationale}</p>
                 <a 
                   href={rec.justbookify_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center mb-3 text-sm font-medium text-blue-600 hover:text-blue-800 group"
+                  className="inline-flex items-center mb-3 text-sm font-medium text-blue-600 hover:text-blue-800 group break-all"
                 >
                   <span className="truncate">View on Justbookify</span>
                   <ExternalLink className="w-3 h-3 ml-1 transition-transform group-hover:translate-x-1 flex-shrink-0 sm:w-4 sm:h-4" />
@@ -556,14 +565,9 @@ const Results: React.FC = () => {
                     {rec.sample_books.map((book, bookIndex) => (
                       <li key={bookIndex} className="flex items-start text-xs text-gray-600 sm:text-sm">
                         <BookMarked className="w-3 h-3 mt-1 mr-2 text-blue-500 flex-shrink-0 sm:w-4 sm:h-4" />
-                        <div className="min-w-0 flex-1">
-                          {book.series && (
-                            <div className="text-xs font-medium text-indigo-800 mb-0.5 truncate">
-                              {book.series} Series
-                            </div>
-                          )}
-                          <div className="font-medium text-gray-800 truncate">{book.title}</div>
-                          <div className="text-xs text-gray-500 truncate">by {book.author}</div>
+                        <div className="min-w-0 flex-1 overflow-hidden">
+                          <div className="font-medium text-gray-800 break-words">{book.title}</div>
+                          <div className="text-xs text-gray-500 break-words">by {book.author}</div>
                         </div>
                       </li>
                     ))}
@@ -583,9 +587,9 @@ const Results: React.FC = () => {
         </h3>
         
         {hasFutureRecommendations ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredFutureReadingPlan.map((monthObj, index) => (
-              <div key={index} className="p-3 bg-white rounded-lg shadow-sm sm:p-4">
+              <div key={index} className="p-3 bg-white rounded-lg shadow-sm sm:p-4 w-full">
                 <h4 className="mb-3 text-base font-semibold text-pink-700 sm:text-lg">{monthObj.month}</h4>
                 <ul className="space-y-3">
                   {monthObj.books.map((book, bookIndex) => (
@@ -597,25 +601,27 @@ const Results: React.FC = () => {
                       >
                         <X className="w-3 h-3 text-red-500" />
                       </button>
-                      {book.series && (
-                        <div className="mb-1">
-                          <span className="text-xs font-medium text-indigo-800 truncate block">{book.series} Series</span>
-                        </div>
-                      )}
-                      <div className="font-medium text-gray-900 text-sm sm:text-base line-clamp-2">{book.title}</div>
-                      <div className="text-xs text-gray-600 sm:text-sm">{getDisplayName(book)}</div>
-                      <div className="mt-1 text-xs text-gray-500 line-clamp-2 sm:text-sm">{book.explanation}</div>
-                      {book.justbookify_link && (
-                        <a 
-                          href={book.justbookify_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center mt-1 text-xs font-medium text-pink-600 hover:text-pink-800 group"
-                        >
-                          <span className="truncate">View on Justbookify</span>
-                          <ExternalLink className="w-3 h-3 ml-1 transition-transform group-hover:translate-x-1 flex-shrink-0" />
-                        </a>
-                      )}
+                      <div className="pr-6 overflow-hidden">
+                        {book.series && (
+                          <div className="mb-1">
+                            <span className="text-xs font-medium text-indigo-800 break-words block">{book.series} Series</span>
+                          </div>
+                        )}
+                        <div className="font-medium text-gray-900 text-sm sm:text-base break-words">{book.title}</div>
+                        <div className="text-xs text-gray-600 sm:text-sm break-words">{getDisplayName(book)}</div>
+                        <div className="mt-1 text-xs text-gray-500 break-words sm:text-sm">{book.explanation}</div>
+                        {book.justbookify_link && (
+                          <a 
+                            href={book.justbookify_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center mt-1 text-xs font-medium text-pink-600 hover:text-pink-800 group break-all"
+                          >
+                            <span className="truncate">View on Justbookify</span>
+                            <ExternalLink className="w-3 h-3 ml-1 transition-transform group-hover:translate-x-1 flex-shrink-0" />
+                          </a>
+                        )}
+                      </div>
                     </li>
                   ))}
                   {monthObj.books.length === 0 && (
@@ -633,10 +639,10 @@ const Results: React.FC = () => {
             <h4 className="mb-2 text-base font-semibold text-pink-800 sm:text-lg">
               Your Reading Journey is Being Planned!
             </h4>
-            <p className="mb-4 text-sm text-pink-700 sm:text-base">
+            <p className="mb-4 text-sm text-pink-700 sm:text-base break-words">
               We're creating a personalized 3-month reading plan based on your preferences.
             </p>
-            <p className="text-xs text-gray-600 sm:text-sm">
+            <p className="text-xs text-gray-600 sm:text-sm break-words">
               Consider starting with books from your favorite genres: <strong className="break-words">{allSelectedGenres.join(', ')}</strong>
               {selectedInterests.length > 0 && (
                 <span> and topics like: <strong className="break-words">{selectedInterests.join(', ')}</strong></span>
@@ -653,29 +659,29 @@ const Results: React.FC = () => {
             <BookOpen className="w-5 h-5 mr-2 text-blue-600 sm:w-6 sm:h-6" />
             How to Find Your Next Great Read
           </h3>
-          <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
             <div className="p-3 bg-white rounded-lg shadow-sm sm:p-4">
               <h4 className="mb-2 text-sm font-semibold text-blue-800 sm:text-base">🏛️ Visit Your Library</h4>
-              <p className="text-xs text-gray-600 sm:text-sm">
+              <p className="text-xs text-gray-600 sm:text-sm break-words">
                 Ask your librarian for recommendations in <strong className="break-words">{allSelectedGenres.join(', ')}</strong>. 
                 They're experts at matching readers with perfect books!
               </p>
             </div>
             <div className="p-3 bg-white rounded-lg shadow-sm sm:p-4">
               <h4 className="mb-2 text-sm font-semibold text-blue-800 sm:text-base">👥 Ask Friends & Family</h4>
-              <p className="text-xs text-gray-600 sm:text-sm">
+              <p className="text-xs text-gray-600 sm:text-sm break-words">
                 What are your friends reading? Sometimes the best recommendations come from people who know you well.
               </p>
             </div>
             <div className="p-3 bg-white rounded-lg shadow-sm sm:p-4">
               <h4 className="mb-2 text-sm font-semibold text-blue-800 sm:text-base">🏆 Try Award Winners</h4>
-              <p className="text-xs text-gray-600 sm:text-sm">
+              <p className="text-xs text-gray-600 sm:text-sm break-words">
                 Look for books that have won awards for your age group - they're often crowd-pleasers!
               </p>
             </div>
             <div className="p-3 bg-white rounded-lg shadow-sm sm:p-4">
               <h4 className="mb-2 text-sm font-semibold text-blue-800 sm:text-base">📚 Explore Book Series</h4>
-              <p className="text-xs text-gray-600 sm:text-sm">
+              <p className="text-xs text-gray-600 sm:text-sm break-words">
                 If you find one book you like, check if it's part of a series - you might love the whole collection!
               </p>
             </div>
@@ -699,21 +705,22 @@ const Results: React.FC = () => {
           <button
             onClick={handleWhatsAppRecommendations}
             disabled={isSubmitting}
-            className="flex items-center justify-center w-full p-3 text-white transition-all bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed group sm:p-4"
+            className="flex items-center justify-center w-full p-3 text-white transition-all bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed group sm:p-4 min-w-0"
           >
-            <Send className="w-4 h-4 mr-2 transition-transform group-hover:-translate-y-1 sm:w-5 sm:h-5" />
-            <span className="truncate">Send to WhatsApp ({parentPhone})</span>
+            <Send className="w-4 h-4 mr-2 transition-transform group-hover:-translate-y-1 sm:w-5 sm:h-5 flex-shrink-0" />
+            <span className="truncate">Send to WhatsApp</span>
+            <span className="hidden sm:inline ml-1">({parentPhone})</span>
           </button>
 
           {success && (
             <div className="p-3 text-center text-green-700 rounded-lg bg-green-50">
-              <p className="text-sm font-medium sm:text-base">{success}</p>
+              <p className="text-sm font-medium sm:text-base break-words">{success}</p>
             </div>
           )}
 
           {error && (
             <div className="p-3 text-center text-red-700 rounded-lg bg-red-50">
-              <p className="text-sm font-medium sm:text-base">{error}</p>
+              <p className="text-sm font-medium sm:text-base break-words">{error}</p>
             </div>
           )}
         </div>
@@ -724,9 +731,9 @@ const Results: React.FC = () => {
         <Button
           onClick={resetQuiz}
           variant="outline"
-          className="flex items-center group hover:bg-gray-50 text-sm sm:text-base"
+          className="flex items-center group hover:bg-gray-50 text-sm sm:text-base min-w-0"
         >
-          <RefreshCw className="w-4 h-4 mr-2 transition-transform duration-500 group-hover:rotate-180 sm:w-5 sm:h-5" />
+          <RefreshCw className="w-4 h-4 mr-2 transition-transform duration-500 group-hover:rotate-180 sm:w-5 sm:h-5 flex-shrink-0" />
           <span className="truncate">Start New Reading Journey</span>
         </Button>
       </div>
