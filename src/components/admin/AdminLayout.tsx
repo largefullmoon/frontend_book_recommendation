@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Book, Users, BookOpen } from 'lucide-react';
+import { Book, Users, BookOpen, BarChart3 } from 'lucide-react';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -33,6 +33,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       path: '/admin/users',
       label: 'Users',
       icon: Users
+    },
+    {
+      path: '/admin/tracking',
+      label: 'User Tracking',
+      icon: BarChart3
     }
   ];
 

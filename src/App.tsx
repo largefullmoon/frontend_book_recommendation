@@ -7,6 +7,7 @@ import AdminLogin from './components/admin/AdminLogin';
 import BookList from './components/admin/BookList';
 import RecommendationManager from './components/admin/RecommendationManager';
 import UserManagement from './components/admin/UserManagement';
+import UserTracking from './components/admin/UserTracking';
 import Logo from './assets/logo.jpg';
 
 function App() {
@@ -53,6 +54,14 @@ function App() {
               element={
                 <AdminLayout>
                   <UserManagement />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/tracking"
+              element={
+                <AdminLayout>
+                  <UserTracking />
                 </AdminLayout>
               }
             />
