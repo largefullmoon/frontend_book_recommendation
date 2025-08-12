@@ -13,7 +13,14 @@ interface QuizUser {
   nonFictionInterests?: string[];
   bookSeries?: any[];
   createdAt: string;
+  updatedAt?: string;
   status: string;
+  topThreeGenres?: string[];
+  fictionGenres?: string[];
+  nonFictionGenres?: string[];
+  additionalGenres?: string[];
+  fictionNonFictionRatio?: number;
+  parentReading?: string;
   quizProgress?: {
     parentConsent: boolean;
     basicInfo: boolean;
@@ -41,6 +48,12 @@ interface RecommendationPlan {
   createdAt: string;
   updatedAt: string;
   status: string;
+  topThreeGenres?: string[];
+  fictionGenres?: string[];
+  nonFictionGenres?: string[];
+  additionalGenres?: string[];
+  fictionNonFictionRatio?: number;
+  parentReading?: string;
 }
 
 interface UserTrackingStats {
@@ -182,6 +195,33 @@ const UserTracking: React.FC = () => {
     const data = activeTab === 'plans' ? recommendationPlans : quizUsers;
     const csvContent = convertToCSV(data);
     downloadCSV(csvContent, `${activeTab}_data.csv`);
+  };
+
+  const exportToExcel = async () => {
+    try {
+      const params = new URLSearchParams({
+        status: statusFilter === 'all' ? '' : statusFilter,
+        email: searchTerm
+      });
+      
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/export/excel?${params}`);
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `book_recommendations_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        console.error('Failed to export Excel file');
+      }
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+    }
   };
 
   const convertToCSV = (data: any[]) => {
@@ -612,6 +652,22 @@ const UserTracking: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">User Tracking & Analytics</h1>
+        <div className="flex space-x-3">
+          <button
+            onClick={exportToCSV}
+            className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export CSV
+          </button>
+          <button
+            onClick={exportToExcel}
+            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export Excel
+          </button>
+        </div>
       </div>
 
       {activeTab === 'analytics' ? (
@@ -661,6 +717,7 @@ const UserTracking: React.FC = () => {
                     <p><strong>Parent Phone:</strong> {selectedUser.parentPhone}</p>
                     <p><strong>Status:</strong> {selectedUser.status}</p>
                     <p><strong>Created:</strong> {formatDate(selectedUser.createdAt)}</p>
+                    <p><strong>Updated:</strong> {formatDate(selectedUser.updatedAt || selectedUser.createdAt)}</p>
                   </div>
                 </div>
                 
@@ -675,6 +732,24 @@ const UserTracking: React.FC = () => {
                     )}
                     {'nonFictionInterests' in selectedUser && (
                       <p><strong>Non-Fiction Interests:</strong> {selectedUser.nonFictionInterests?.join(', ') || 'None'}</p>
+                    )}
+                    {'topThreeGenres' in selectedUser && selectedUser.topThreeGenres && (
+                      <p><strong>Top Three Genres:</strong> {selectedUser.topThreeGenres.join(', ')}</p>
+                    )}
+                    {'fictionGenres' in selectedUser && selectedUser.fictionGenres && (
+                      <p><strong>Fiction Genres:</strong> {selectedUser.fictionGenres.join(', ')}</p>
+                    )}
+                    {'nonFictionGenres' in selectedUser && selectedUser.nonFictionGenres && (
+                      <p><strong>Non-Fiction Genres:</strong> {selectedUser.nonFictionGenres.join(', ')}</p>
+                    )}
+                    {'additionalGenres' in selectedUser && selectedUser.additionalGenres && (
+                      <p><strong>Additional Genres:</strong> {selectedUser.additionalGenres.join(', ')}</p>
+                    )}
+                    {'fictionNonFictionRatio' in selectedUser && selectedUser.fictionNonFictionRatio && (
+                      <p><strong>Fiction/Non-Fiction Ratio:</strong> {selectedUser.fictionNonFictionRatio}%</p>
+                    )}
+                    {'parentReading' in selectedUser && selectedUser.parentReading && (
+                      <p><strong>Parent Reading Habits:</strong> {selectedUser.parentReading}</p>
                     )}
                   </div>
                 </div>

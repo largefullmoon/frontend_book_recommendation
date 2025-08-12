@@ -17,6 +17,7 @@ import FictionNonFictionRatio from './stages/FictionNonFictionRatio';
 import GenreNonFiction from './stages/GenreNonFiction';
 import YoungInterests from './stages/YoungInterests';
 import BookSeries from './stages/BookSeries';
+import ContactInfo from './stages/ContactInfo';
 import Results from './stages/Results';
 
 const QuizContainer: React.FC = () => {
@@ -54,6 +55,8 @@ const QuizContainer: React.FC = () => {
         return <YoungInterests />;
       case 'bookSeries':
         return <BookSeries />;
+      case 'contactInfo':
+        return <ContactInfo />;
       case 'results':
         return <Results />;
       default:

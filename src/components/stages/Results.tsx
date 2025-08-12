@@ -55,7 +55,10 @@ const Results: React.FC = () => {
     resetQuiz,
     fictionGenres,
     nonFictionGenres,
-    additionalGenres
+    additionalGenres,
+    parentReading,
+    topThreeGenres,
+    fictionNonFictionRatio
   } = useQuiz();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -185,7 +188,13 @@ const Results: React.FC = () => {
         nonFictionInterests,
         bookSeries,
         parentEmail,
-        parentPhone
+        parentPhone,
+        parentReading,
+        topThreeGenres,
+        fictionGenres,
+        nonFictionGenres,
+        additionalGenres,
+        fictionNonFictionRatio
       };
 
       console.log('Full request data:', requestData);
@@ -195,6 +204,32 @@ const Results: React.FC = () => {
       setCurrentRecommendations(response.data.current);
       setFutureReadingPlan(response.data.future);
       setSeriesRecommendations(response.data.recommendations);
+      
+      // Complete the quiz and save all data
+      if (userId) {
+        try {
+          await api.completeQuiz({
+            userId,
+            name,
+            age,
+            parentEmail,
+            parentPhone,
+            parentReading,
+            selectedGenres: allSelectedGenres,
+            selectedInterests,
+            nonFictionInterests,
+            topThreeGenres,
+            fictionGenres,
+            nonFictionGenres,
+            additionalGenres,
+            fictionNonFictionRatio,
+            bookSeries,
+            completedAt: new Date().toISOString()
+          });
+        } catch (completeError) {
+          console.error('Failed to complete quiz:', completeError);
+        }
+      }
       
       // Save recommendations to database
       if (userId && response.data) {

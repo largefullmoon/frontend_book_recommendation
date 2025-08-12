@@ -17,6 +17,7 @@ type QuizStage =
   | 'additionalGenresYoung'
   | 'fictionNonFictionRatio'
   | 'bookSeries'
+  | 'contactInfo'
   | 'results';
 
 interface BookSeriesResponse {
@@ -119,6 +120,7 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       'additionalGenres',
       'fictionNonFictionRatio',
       'bookSeries',
+      'contactInfo',
       'results'
     ];
     
@@ -220,7 +222,8 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       'additionalGenres': 'fictionNonFictionRatio',
       'additionalGenresYoung': 'bookSeries',
       'fictionNonFictionRatio': 'bookSeries',
-      'bookSeries': 'results',
+      'bookSeries': 'contactInfo',
+      'contactInfo': 'results',
       'results': 'start'
     };
 
@@ -231,10 +234,9 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       switch (stage) {
         case 'parentConsent':
-          if (parentEmail && parentPhone) {
-            const consentResponse = await api.saveParentConsent(parentEmail, parentPhone);
-            setUserId(consentResponse.userId);
-          }
+          // Create a new user ID for this session
+          const newUserId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          setUserId(newUserId);
           break;
 
         case 'name':
@@ -299,6 +301,13 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         case 'bookSeries':
           if (userId && bookSeries.length > 0) {
             await api.updateBookSeriesResponses(userId, bookSeries);
+          }
+          break;
+
+        case 'contactInfo':
+          if (userId && (parentEmail || parentPhone)) {
+            const consentResponse = await api.saveParentConsent(parentEmail, parentPhone);
+            setUserId(consentResponse.userId);
           }
           break;
 
@@ -379,7 +388,8 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       'youngInterests': 'age',
       'genreYoung': age && age <= 7 ? 'parentReading' : 'age',
       'bookSeries': getPreviousStageForBookSeries(),
-      'results': 'bookSeries'
+      'contactInfo': 'bookSeries',
+      'results': 'contactInfo'
     };
     
     // For users aged 11+, handle reverse navigation from fictionNonFictionRatio

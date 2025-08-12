@@ -1,37 +1,19 @@
 import React, { useState } from 'react';
 import { Shield } from 'lucide-react';
 import { useQuiz } from '../../context/QuizContext';
-import { useToast } from '../../context/ToastContext';
 import Button from '../common/Button';
 
 const ParentConsent: React.FC = () => {
-  const { nextStage, prevStage, setParentEmail, setParentPhone } = useQuiz();
-  const { showError } = useToast();
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const { nextStage, prevStage } = useQuiz();
   const [hasConsent, setHasConsent] = useState(false);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate contact information
-    if (!email && !phone) {
-      showError('Please provide either an email address or phone number.');
+    
+    if (!hasConsent) {
       return;
     }
-
-    if (email && !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      showError('Please enter a valid email address.');
-      return;
-    }
-
-    if (phone && !phone.match(/^\+?[\d\s-]{10,}$/)) {
-      showError('Please enter a valid phone number.');
-      return;
-    }
-
-    setParentEmail(email);
-    setParentPhone(phone);
+    
     nextStage();
   };
   
@@ -52,37 +34,6 @@ const ParentConsent: React.FC = () => {
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-        <div>
-          <label htmlFor="email" className="block mb-1 text-xs font-medium text-gray-700 sm:text-sm">
-            Email Address
-          </label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md sm:px-4 sm:text-base focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="email@example.com"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="phone" className="block mb-1 text-xs font-medium text-gray-700 sm:text-sm">
-            Phone Number
-          </label>
-          <input
-            type="tel"
-            id="phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md sm:px-4 sm:text-base focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="+1 (123) 456-7890"
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            We'll use these to send you their book recommendations
-          </p>
-        </div>
-
         <div className="flex items-start">
           <div className="flex items-center h-5">
             <input
