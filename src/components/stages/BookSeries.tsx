@@ -32,10 +32,10 @@ const BookSeries: React.FC = () => {
   // Get age group based on user's age
   const getAgeGroup = () => {
     if (age !== undefined && age !== null) {
-      if (age < 5) return 'Below 5';
-      if (age >= 5 && age <= 8) return '6-8';
-      if (age >= 9 && age <= 10) return '9-10';
-      if (age >= 11 && age <= 12) return '11-12';
+      if (age <= 5) return 'Below 5';
+      if (age > 5 && age <= 8) return '6-8';
+      if (age > 8 && age <= 10) return '9-10';
+      if (age > 10 && age <= 12) return '11-12';
       if (age >= 13) return '13+';
     }
     return 'Below 5'; // fallback
@@ -165,30 +165,30 @@ const BookSeries: React.FC = () => {
   };
   
   const ResponseOptions = ({ seriesId }: { seriesId: string }) => (
-    <div className="mt-4 p-4 bg-gray-50 rounded-lg animate-fadeIn">
-      <p className="text-sm font-medium text-gray-800 mb-3">How did you like it?</p>
+    <div className="p-4 mt-4 rounded-lg bg-gray-50 animate-fadeIn">
+      <p className="mb-3 text-sm font-medium text-gray-800">How did you like it?</p>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => handleResponse(seriesId, 'love')}
-          className="bg-pink-100 hover:bg-pink-200 text-pink-800 py-2 rounded-lg text-sm"
+          className="py-2 text-sm text-pink-800 bg-pink-100 rounded-lg hover:bg-pink-200"
         >
           I love it! 😍
         </button>
         <button
           onClick={() => handleResponse(seriesId, 'like')}
-          className="bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 rounded-lg text-sm"
+          className="py-2 text-sm text-blue-800 bg-blue-100 rounded-lg hover:bg-blue-200"
         >
           I like it 🙂
         </button>
         <button
           onClick={() => handleResponse(seriesId, 'dontReadAnymore')}
-          className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-2 rounded-lg text-sm"
+          className="py-2 text-sm text-yellow-800 bg-yellow-100 rounded-lg hover:bg-yellow-200"
         >
           Don't read anymore ⏱️
         </button>
         <button
           onClick={() => handleResponse(seriesId, 'didNotEnjoy')}
-          className="bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 rounded-lg text-sm"
+          className="py-2 text-sm text-gray-800 bg-gray-100 rounded-lg hover:bg-gray-200"
         >
           Didn't enjoy it 👎
         </button>
@@ -209,33 +209,33 @@ const BookSeries: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+        <div className="w-8 h-8 border-b-2 border-indigo-500 rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center p-4">
-        <p className="text-red-600 mb-4">{error}</p>
+      <div className="p-4 text-center">
+        <p className="mb-4 text-red-600">{error}</p>
         <Button onClick={() => window.location.reload()}>Try Again</Button>
       </div>
     );
   }
 
   return (
-    <div className="animate-fadeIn px-4 sm:px-0">
-      <div className="text-center mb-4 sm:mb-6">
-        <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-3 sm:mb-4">
-          <BookOpenCheck className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-500" />
+    <div className="px-4 animate-fadeIn sm:px-0">
+      <div className="mb-4 text-center sm:mb-6">
+        <div className="flex items-center justify-center mx-auto mb-3 bg-indigo-100 rounded-full w-14 h-14 sm:w-16 sm:h-16 sm:mb-4">
+          <BookOpenCheck className="text-indigo-500 w-7 h-7 sm:w-8 sm:h-8" />
         </div>
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
+        <h2 className="mb-2 text-xl font-bold text-gray-800 sm:text-2xl">
           Have you read these books?
         </h2>
-        <p className="text-sm sm:text-base text-gray-600">
+        <p className="text-sm text-gray-600 sm:text-base">
           Please select whether you've read each book, {name}!
         </p>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1">
+        <p className="mt-1 text-xs text-gray-500 sm:text-sm">
           Page {currentPage + 1} of {totalPages}
         </p>
       </div>
@@ -250,24 +250,24 @@ const BookSeries: React.FC = () => {
         </div>
       )}
 
-      <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+      <div className="mb-6 space-y-3 sm:space-y-4 sm:mb-8">
         {currentSeries.map((book) => (
           <div key={book.id}>
             <Card className="p-3 sm:p-4">
               <div className="space-y-2 sm:space-y-3">
                 <div>
-                  <h3 className="text-sm sm:text-base font-medium">{book.title}</h3>
-                  <p className="text-xs sm:text-sm text-gray-600">{book.author}</p>
+                  <h3 className="text-sm font-medium sm:text-base">{book.title}</h3>
+                  <p className="text-xs text-gray-600 sm:text-sm">{book.author}</p>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
                   <label className="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="radio"
                       name={`readStatus-${book.id}`}
                       checked={hasReadSeries(book.id)}
                       onChange={() => handleReadStatusChange(book.id, true)}
-                      className="form-radio text-indigo-600 w-4 h-4"
+                      className="w-4 h-4 text-indigo-600 form-radio"
                     />
                     <span className="text-xs sm:text-sm">Read</span>
                   </label>
@@ -277,7 +277,7 @@ const BookSeries: React.FC = () => {
                       name={`readStatus-${book.id}`}
                       checked={bookSeries.some(item => item.seriesId === book.id && !item.hasRead)}
                       onChange={() => handleReadStatusChange(book.id, false)}
-                      className="form-radio text-indigo-600 w-4 h-4"
+                      className="w-4 h-4 text-indigo-600 form-radio"
                     />
                     <span className="text-xs sm:text-sm">Didn't Read</span>
                   </label>
@@ -296,18 +296,18 @@ const BookSeries: React.FC = () => {
         ))}
       </div>
       
-      <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:gap-0">
         <Button 
           variant="outline" 
           onClick={currentPage > 0 ? () => setCurrentPage(prev => prev - 1) : prevStage}
-          className="text-sm sm:text-base px-3 sm:px-4 py-2 w-full sm:w-auto"
+          className="w-full px-3 py-2 text-sm sm:text-base sm:px-4 sm:w-auto"
         >
           {currentPage > 0 ? 'Previous Page' : 'Back'}
         </Button>
         
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-          {/* Skip Books Button - only show if no books have been marked as read
-          {bookSeries.filter(item => 
+        <div className="flex flex-col w-full gap-2 sm:flex-row sm:gap-3 sm:w-auto">
+          {/* Skip Books Button - only show if no books have been marked as read */}
+          {/* {bookSeries.filter(item => 
             recommendedBooks.some(book => book.id === item.seriesId) && item.hasRead
           ).length === 0 && (
             <Button 
@@ -319,7 +319,7 @@ const BookSeries: React.FC = () => {
                   nextStage();
                 }, 2000);
               }}
-              className="text-sm sm:text-base px-3 sm:px-4 py-2 text-gray-600 hover:text-gray-800 w-full sm:w-auto"
+              className="w-full px-3 py-2 text-sm text-gray-600 sm:text-base sm:px-4 hover:text-gray-800 sm:w-auto"
             >
               Skip Books
             </Button>
@@ -327,7 +327,7 @@ const BookSeries: React.FC = () => {
           
           <Button 
             onClick={handleNextPage}
-            className="text-sm sm:text-base px-3 sm:px-4 py-2 w-full sm:w-auto"
+            className="w-full px-3 py-2 text-sm sm:text-base sm:px-4 sm:w-auto"
           >
             {currentPage < totalPages - 1 ? 'Next Page' : 'Finish'}
           </Button>
