@@ -306,7 +306,7 @@ const BookSeries: React.FC = () => {
         </Button>
         
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-          {/* Skip Books Button - only show if no books have been marked as read */}
+          {/* Skip Books Button - only show if no books have been marked as read
           {bookSeries.filter(item => 
             recommendedBooks.some(book => book.id === item.seriesId) && item.hasRead
           ).length === 0 && (
@@ -323,7 +323,7 @@ const BookSeries: React.FC = () => {
             >
               Skip Books
             </Button>
-          )}
+          )} */}
           
           <Button 
             onClick={handleNextPage}

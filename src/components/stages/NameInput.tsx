@@ -3,35 +3,35 @@ import { SmilePlus } from 'lucide-react';
 import { useQuiz } from '../../context/QuizContext';
 import { useToast } from '../../context/ToastContext';
 import Button from '../common/Button';
-
+import Icon from '../../assets/icon.jpeg'
 const NameInput: React.FC = () => {
   const { nextStage, prevStage, name, setName } = useQuiz();
   const { showError } = useToast();
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (name.trim().length < 2) {
       showError('Please enter your name (at least 2 characters)');
       return;
     }
-    
+
     nextStage();
   };
-  
+
   return (
-    <div className="animate-fadeIn px-4 sm:px-0">
-      <div className="text-center mb-6 sm:mb-8">
-        <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-3 sm:mb-4">
-          <SmilePlus className="w-7 h-7 sm:w-8 sm:h-8 text-yellow-500" />
+    <div className="px-4 animate-fadeIn sm:px-0">
+      <div className="mb-6 text-center sm:mb-8">
+        <div className="flex items-center justify-center mx-auto mb-3 bg-yellow-100 rounded-full w-28 h-28 sm:w-32 sm:h-32 sm:mb-4">
+          <img src={Icon} />
         </div>
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Hi there!</h2>
-        <p className="text-base sm:text-lg text-gray-600">I'm Bookie, your reading buddy!</p>
+        <h2 className="mb-2 text-xl font-bold text-gray-800 sm:text-2xl">Hi there!</h2>
+        <p className="text-base text-gray-600 sm:text-lg">I'm Bookie, your reading buddy!</p>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         <div>
-          <label htmlFor="name" className="block text-base sm:text-lg font-medium text-gray-700 mb-2">
+          <label htmlFor="name" className="block mb-2 text-base font-medium text-gray-700 sm:text-lg">
             What's your name?
           </label>
           <input
@@ -45,18 +45,18 @@ const NameInput: React.FC = () => {
           />
 
         </div>
-        
+
         <div className="flex justify-between pt-4">
-          <Button 
-            type="button" 
-            variant="outline" 
+          <Button
+            type="button"
+            variant="outline"
             onClick={prevStage}
-            className="text-sm sm:text-base px-3 sm:px-4 py-2"
+            className="px-3 py-2 text-sm sm:text-base sm:px-4"
           >
             Back
           </Button>
-          
-          <Button 
+
+          <Button
             type="submit"
             className="text-sm sm:text-base px-4 sm:px-5 py-2 sm:py-2.5 animate-pulse-subtle"
           >
