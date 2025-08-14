@@ -149,6 +149,9 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const saveCurrentState = async () => {
     if (!userId) return;
     
+    // Skip saving if we have a temporary userId (will be saved in contactInfo stage)
+    if (userId.startsWith('user_')) return;
+    
     setIsSaving(true);
     setSaveError(null);
     
@@ -195,8 +198,8 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     });
 
-    // Save individual response to backend
-    if (userId && response) {
+    // Save individual response to backend (skip if temporary userId)
+    if (userId && !userId.startsWith('user_') && response) {
       try {
         await api.saveBookSeriesResponse(userId, seriesId, hasRead, response);
       } catch (error) {
@@ -241,31 +244,36 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         case 'name':
         case 'age':
-          if (userId && name && age !== null) {
+          // Skip saving if we have a temporary userId (will be saved in contactInfo stage)
+          if (userId && !userId.startsWith('user_') && name && age !== null) {
             await api.updateUserBasicInfo(userId, name, age);
           }
           break;
 
         case 'parentReading':
-          if (userId && parentReading) {
+          // Skip saving if we have a temporary userId (will be saved in contactInfo stage)
+          if (userId && !userId.startsWith('user_') && parentReading) {
             await api.updateParentReading(userId, parentReading);
           }
           break;
 
         case 'genreYoung':
-          if (userId && selectedGenres.length > 0) {
+          // Skip saving if we have a temporary userId (will be saved in contactInfo stage)
+          if (userId && !userId.startsWith('user_') && selectedGenres.length > 0) {
             await api.updateGenrePreferences(userId, { selectedGenres });
           }
           break;
 
         case 'youngInterests':
-          if (userId && selectedInterests.length > 0) {
+          // Skip saving if we have a temporary userId (will be saved in contactInfo stage)
+          if (userId && !userId.startsWith('user_') && selectedInterests.length > 0) {
             await api.updateInterests(userId, selectedInterests);
           }
           break;
 
         case 'fictionGenres':
-          if (userId && fictionGenres.length > 0) {
+          // Skip saving if we have a temporary userId (will be saved in contactInfo stage)
+          if (userId && !userId.startsWith('user_') && fictionGenres.length > 0) {
             await api.updateGenrePreferences(userId, { fictionGenres });
           }
           break;
@@ -275,77 +283,127 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           break;
 
         case 'nonFictionGenres':
-          if (userId && nonFictionGenres.length > 0) {
+          // Skip saving if we have a temporary userId (will be saved in contactInfo stage)
+          if (userId && !userId.startsWith('user_') && nonFictionGenres.length > 0) {
             await api.updateGenrePreferences(userId, { nonFictionGenres });
           }
           break;
 
         case 'additionalGenres':
-          if (userId && additionalGenres.length > 0) {
+          // Skip saving if we have a temporary userId (will be saved in contactInfo stage)
+          if (userId && !userId.startsWith('user_') && additionalGenres.length > 0) {
             await api.updateGenrePreferences(userId, { additionalGenres });
           }
           break;
 
         case 'additionalGenresYoung':
-          if (userId && additionalGenres.length > 0) {
+          // Skip saving if we have a temporary userId (will be saved in contactInfo stage)
+          if (userId && !userId.startsWith('user_') && additionalGenres.length > 0) {
             await api.updateGenrePreferences(userId, { additionalGenres });
           }
           break;
 
         case 'fictionNonFictionRatio':
-          if (userId) {
+          // Skip saving if we have a temporary userId (will be saved in contactInfo stage)
+          if (userId && !userId.startsWith('user_') && fictionNonFictionRatio !== 50) {
             await api.updateGenrePreferences(userId, { fictionNonFictionRatio });
           }
           break;
 
         case 'bookSeries':
-          if (userId && bookSeries.length > 0) {
+          // Skip saving if we have a temporary userId (will be saved in contactInfo stage)
+          if (userId && !userId.startsWith('user_') && bookSeries.length > 0) {
             await api.updateBookSeriesResponses(userId, bookSeries);
           }
           break;
 
         case 'contactInfo':
           if (userId && (parentEmail || parentPhone)) {
-            const consentResponse = await api.saveParentConsent(parentEmail, parentPhone);
-            setUserId(consentResponse.userId);
+            try {
+              // Save parent consent and get real userId from backend
+              const consentResponse = await api.saveParentConsent(parentEmail, parentPhone);
+              const realUserId = consentResponse.userId;
+              setUserId(realUserId);
+              
+              // Now save all the quiz data with the real userId
+              if (name && age !== null) {
+                await api.updateUserBasicInfo(realUserId, name, age);
+              }
+              
+              if (parentReading) {
+                await api.updateParentReading(realUserId, parentReading);
+              }
+              
+              // Save genre preferences based on age
+              if (age && age <= 5 && selectedInterests.length > 0) {
+                await api.updateInterests(realUserId, selectedInterests);
+              } else if (age && age >= 6 && age <= 10 && selectedGenres.length > 0) {
+                await api.updateGenrePreferences(realUserId, { selectedGenres });
+              } else if (age && age >= 11) {
+                if (fictionGenres.length > 0) {
+                  await api.updateGenrePreferences(realUserId, { fictionGenres });
+                }
+                if (nonFictionGenres.length > 0) {
+                  await api.updateGenrePreferences(realUserId, { nonFictionGenres });
+                }
+                if (additionalGenres.length > 0) {
+                  await api.updateGenrePreferences(realUserId, { additionalGenres });
+                }
+                if (fictionNonFictionRatio !== 50) {
+                  await api.updateGenrePreferences(realUserId, { fictionNonFictionRatio });
+                }
+              }
+              
+              if (additionalGenres.length > 0) {
+                await api.updateGenrePreferences(realUserId, { additionalGenres });
+              }
+              
+              if (bookSeries.length > 0) {
+                await api.updateBookSeriesResponses(realUserId, bookSeries);
+              }
+              
+            } catch (error) {
+              console.error('Failed to save contact info and quiz data:', error);
+              setSaveError('Failed to save your information. Please try again.');
+              return; // Don't proceed to next stage if saving fails
+            }
           }
           break;
 
         case 'results':
-          // Complete quiz with all data
+          // Quiz is already completed in contactInfo stage, just mark as complete
           if (userId) {
-            // Combine all genres based on age for final submission
-            let allGenres = [...selectedGenres];
-            if (age && age >= 11) {
-              allGenres = [...fictionGenres, ...nonFictionGenres, ...additionalGenres];
-            } else if (age && age >= 6 && age <= 10) {
-              allGenres = [...selectedGenres, ...additionalGenres];
+            try {
+              await api.completeQuiz({
+                userId,
+                name,
+                age,
+                parentEmail,
+                parentPhone,
+                parentReading,
+                selectedGenres: age && age >= 11 ? [...fictionGenres, ...nonFictionGenres, ...additionalGenres] : [...selectedGenres, ...additionalGenres],
+                selectedInterests,
+                nonFictionInterests,
+                topThreeGenres,
+                fictionGenres,
+                nonFictionGenres,
+                additionalGenres,
+                fictionNonFictionRatio,
+                bookSeries,
+                completedAt: new Date().toISOString()
+              });
+            } catch (error) {
+              console.error('Failed to mark quiz as complete:', error);
+              // Don't show error to user since they already have their recommendations
             }
-            
-            await api.completeQuiz({
-              userId,
-              name,
-              age,
-              parentEmail,
-              parentPhone,
-              parentReading,
-              selectedGenres: allGenres,
-              selectedInterests,
-              nonFictionInterests,
-              topThreeGenres,
-              fictionGenres,
-              nonFictionGenres,
-              additionalGenres,
-              fictionNonFictionRatio,
-              bookSeries,
-              completedAt: new Date().toISOString()
-            });
           }
           break;
       }
 
-      // Save current state after each stage
-      await saveCurrentState();
+      // Save current state after each stage, but skip for contactInfo since we don't have a valid userId yet
+      if (stage !== 'contactInfo') {
+        await saveCurrentState();
+      }
       
     } catch (error) {
       console.error('Failed to save stage data:', error);

@@ -28,8 +28,7 @@ const ParentConsent: React.FC = () => {
       
       <div className="p-3 mb-4 rounded-lg bg-blue-50 sm:p-4 sm:mb-6">
         <p className="text-xs text-blue-800 sm:text-sm">
-          This tool helps us recommend age-appropriate books for your child based on their interests. 
-          We'll ask questions about their age, reading preferences, and books they've enjoyed.
+          This tool helps us recommend age-appropriate books for your child based on their interests. We'll ask a few questions about their age, reading preferences and books they've enjoyed. At the end, we'll need your contact details so we can share their personalized recommendations with you. This data is collected only for understanding their reading preference only
         </p>
       </div>
       

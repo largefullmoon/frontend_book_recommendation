@@ -654,13 +654,6 @@ const UserTracking: React.FC = () => {
         <h1 className="text-2xl font-bold text-gray-900">User Tracking & Analytics</h1>
         <div className="flex space-x-3">
           <button
-            onClick={exportToCSV}
-            className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export CSV
-          </button>
-          <button
             onClick={exportToExcel}
             className="flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
           >

@@ -45,8 +45,8 @@ const ContactInfo: React.FC = () => {
       
       <div className="p-3 mb-4 rounded-lg bg-green-50 sm:p-4 sm:mb-6">
         <p className="text-xs text-green-800 sm:text-sm">
-          Great! We've collected all the information we need to recommend perfect books for your child. 
-          Please provide your contact information so we can send you their personalized reading recommendations.
+          Just 1 last step, book explorer! Before Bookie goes on the big book hunt 📚✨
+          Please hand this device to your parents so they can add their contact information below. That way, you'll get your special recommendations — and keep them forever! Once they do, your magical reading list will be on its way! 🚀📖
         </p>
       </div>
       
